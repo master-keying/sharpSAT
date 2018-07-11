@@ -87,7 +87,21 @@ public:
 		stopwatch_.setTimeBound(config_.time_bound_seconds);
 	}
 
-	void solve(const std::string & file_name);
+	/**
+	 * Attempts to solve the #SAT instance.
+	 *
+	 * The instance must be loaded via the \ref Instance public API
+	 * (\ref Instance::initialize, \ref Instance::add_clause and
+	 * \ref Instance::finalize).
+	 * 
+	 * Time-limit in seconds can be set by `setTimeBound()`.
+	 *
+	 * Calculation result can be found in `statistics().exit_state_`
+	 * and `statistics().final_solution_count()`.
+	 */
+	void solve();
+
+	void load_and_solve(const std::string & file_name);
 
 	SolverConfiguration &config() {
 		return config_;

@@ -11,14 +11,16 @@
 namespace sharpSAT {
 
 typedef unsigned VariableIndex;
+
 typedef unsigned ClauseIndex;
-typedef unsigned ClauseOfs;
+static const ClauseIndex clsSENTINEL(0);
+
+typedef unsigned ClauseOfs; //!< Offset of a clause
+static const ClauseOfs NOT_A_CLAUSE(0);
+static const ClauseOfs SENTINEL_CL(0);
 
 typedef unsigned CacheEntryID;
 
-static const ClauseIndex NOT_A_CLAUSE(0);
-static const auto SENTINEL_CL = NOT_A_CLAUSE;
-static const auto clsSENTINEL = NOT_A_CLAUSE;
 static const VariableIndex varsSENTINEL = 0;
 
 enum class SOLVER_StateT {

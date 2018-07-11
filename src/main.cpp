@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
       }
       theSolver.config().time_bound_seconds = atol(argv[i + 1]);
       if (theSolver.config().verbose)
-        cout << "time bound set to" << theSolver.config().time_bound_seconds << "s\n";
+        cout << "time bound set to " << theSolver.config().time_bound_seconds << "s\n";
      } else if (strcmp(argv[i], "-cs") == 0) {
       if (argc <= i + 1) {
         cout << " wrong parameters" << endl;
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
       input_file = argv[i];
   }
 
-  theSolver.solve(input_file);
+  theSolver.load_and_solve(input_file);
 
 //  cout << sizeof(LiteralID)<<"MALLOC_STATS:" << endl;
 //  malloc_stats();

@@ -10,6 +10,7 @@
 
 #include <sharpSAT/primitive_types.h>
 #include <vector>
+#include <cassert>
 #include <iostream>
 
 namespace sharpSAT {
@@ -73,18 +74,51 @@ public:
   unsigned raw() const { return value_;}
 
 private:
+
+  /*!
+   * MiniSAT-like encoded literal.
+   * 
+   * The LSB is the sign (false = 0, true = 1).
+   * Remaining bits represent a variable.
+   */ 
   unsigned value_;
 
   template <class _T> friend class LiteralIndexedVector;
 };
 
+/*!
+ * Not-a-literal is a special literal.
+ * 
+ * It's represented as value 0, hence its
+ * variable is the \ref varsSENTINEL.
+ */
 static const LiteralID NOT_A_LIT(0, false);
 static const auto SENTINEL_LIT = NOT_A_LIT;
 
 class Literal {
 public:
+  
+  /*!
+   * The "neighbour" literals in binary clauses.
+   * 
+   * Invariant: `back()` is \ref SENTINEL_LIT
+   */
   std::vector<LiteralID> binary_links_ = std::vector<LiteralID>(1,SENTINEL_LIT);
+  
+  /*!
+   * Subset of clauses, in which the literal appears.
+   * 
+   * Values represent offsets within \ref Instance::literal_pool_.
+   * 
+   * _Purpose:_ If a literal is set, the watched clauses will be updated.
+   * If set to `true`, clauses are ignored in future search.
+   * If set to `false`, the next literal watch for that clause.
+   * 
+   * _Invariant:_ `front()` is \ref SENTINEL_CL
+   */ 
   std::vector<ClauseOfs> watch_list_ = std::vector<ClauseOfs>(1,SENTINEL_CL);
+  
+  //! Initialized to literal's occurances among all clauses
   float activity_score_ = 0.0f;
 
   void increaseActivity(unsigned u = 1){
@@ -101,6 +135,8 @@ public:
   }
 
   void replaceWatchLinkTo(ClauseOfs clause_ofs, ClauseOfs replace_ofs) {
+    assert(clause_ofs != SENTINEL_CL);
+    assert(replace_ofs != SENTINEL_CL);
         for (auto it = watch_list_.begin(); it != watch_list_.end(); it++)
           if (*it == clause_ofs) {
             *it = replace_ofs;
@@ -108,7 +144,7 @@ public:
           }
   }
 
-  void addWatchLinkTo(ClauseIndex clause_ofs) {
+  void addWatchLinkTo(ClauseOfs clause_ofs) {
     watch_list_.push_back(clause_ofs);
   }
 
@@ -136,16 +172,39 @@ public:
 }; // Literal
 
 class Antecedent {
+
+  /*!
+   * A flagged integer.
+   * 
+   * If the LSB is 1, the value represents a \ref ClauseOfs.
+   * If the represented clause is \ref NOT_A_CLAUSE,
+   * then the value in this field is 1.
+   * If `sizeof(unsigned int) = 4` (on 32-bit and 64-bit Linux),
+   * this can represent at most ~2*10^9 variables.
+   * 
+   * If the LSB is 0, the value represents a \ref LiteralID.
+   * In that case the 2nd LSB is the sign.
+   * Remaining bits represent variable ID. 
+   * If `sizeof(unsigned int) = 4` (on 32-bit and 64-bit Linux),
+   * this can represent at most ~10^9 variables.
+   * Since \ref varsSENTINEL is 0, its `false` \ref LiteralID
+   * is also 0 and hence this field is also 0.
+   */
   unsigned int val_;
 
 public:
+  
+  //! Antecendant represents \ref NOT_A_CLAUSE
   Antecedent() {
     val_ = 1;
   }
 
+  //! Antecendant represents a clause
   Antecedent(const ClauseOfs cl_ofs) {
      val_ = (cl_ofs << 1) | 1;
    }
+
+  //! Antecendant represents a literal
   Antecedent(const LiteralID idLit) {
     val_ = (idLit.raw() << 1);
   }
@@ -175,8 +234,19 @@ struct Variable {
   int decision_level = INVALID_DL;
 };
 
-// for now Clause Header is just a dummy
-// we keep it for possible later changes
+/*!
+ * Statistics about a clause.
+ *
+ * For now Clause Header is just a dummy
+ * we keep it for possible later changes.
+ * 
+ * _Warning:_ Due to initialization in \ref Instance::addClause,
+ * the constructor is never called. All memory occupied by
+ * objects of this will be **zero-initialized**!
+ * 
+ * _Warning:_ Due to initialization in \ref Instance::addClause,
+ * `sizeof(ClauseHeader)` and `sizeof(LiteralID)` must be divisible!
+ */
 class ClauseHeader {
   unsigned creation_time_; // number of conflicts seen at creation time
   unsigned score_;
@@ -202,7 +272,10 @@ public:
   void set_creation_time(unsigned time) {
     creation_time_ = time;
   }
-  static unsigned overheadInLits(){return sizeof(ClauseHeader)/sizeof(LiteralID);}
+
+  constexpr static unsigned overheadInLits() {
+    return sizeof(ClauseHeader) / sizeof(LiteralID);
+  }
 }; // ClauseHeader
 } // sharpSAT namespace
 #endif /* STRUCTURES_H_ */

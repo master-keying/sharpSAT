@@ -77,7 +77,7 @@ void DataAndStatistics::printShort() {
   cout << "cache (stores / hits) \t\t\t" << num_cached_components_ << "/"
       << num_cache_hits_ << endl;
   cout << "cache miss rate " << cache_miss_rate() * 100 << "%" << endl;
-  cout << " avg. variable count (stores / hits) \t" << getAvgComponentSize()
+  cout << "avg. variable count (stores / hits) \t" << getAvgComponentSize()
       << "/" << getAvgCacheHitSize() << endl << endl;
   cout << "\n# solutions " << endl;
 

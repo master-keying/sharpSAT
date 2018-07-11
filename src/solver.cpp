@@ -7,6 +7,7 @@
 #include <sharpSAT/solver.h>
 #include <deque>
 #include <algorithm>
+#include <tuple>
 
 using namespace std;
 
@@ -130,15 +131,10 @@ void Solver::HardWireAndCompact() {
 	original_lit_pool_size_ = literal_pool_.size();
 }
 
-void Solver::solve(const string &file_name) {
-	stopwatch_.start();
-	statistics_.input_file_ = file_name;
-
-	createfromFile(file_name);
+void Solver::solve() {
 	initStack(num_variables());
 
 	if (config_.verbose) {
-		cout << "Solving " << file_name << endl;
 		statistics_.printShortFormulaInfo();
 	}
 	if (config_.verbose)
@@ -170,6 +166,19 @@ void Solver::solve(const string &file_name) {
 		statistics_.set_final_solution_count(0.0);
 		cout << endl << " FOUND UNSAT DURING PREPROCESSING " << endl;
 	}
+}
+
+void Solver::load_and_solve(const string &file_name) {
+	stopwatch_.start();
+	statistics_.input_file_ = file_name;
+
+	createfromFile(file_name);
+
+	if (config_.verbose) {
+		cout << "Solving " << file_name << endl;
+	}
+
+	solve();
 
 	stopwatch_.stop();
 	statistics_.time_elapsed_ = stopwatch_.getElapsedSeconds();

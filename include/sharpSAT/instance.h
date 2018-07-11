@@ -17,6 +17,38 @@
 namespace sharpSAT {
 
 class Instance {
+public:
+  
+  /**
+   * Make this instance empty.
+   *
+   * Make sure to call \ref finalize() after filling this instance.
+   *
+   * @param[in] nVars number of used variables
+   * @param[in] nCls number of added clauses
+   * @param[in] poolSize expected number of literals
+   */
+  void initialize(unsigned int nVars, unsigned int nCls,
+                  unsigned int poolSize = 1000);
+
+  /**
+   * Adds a single clause into the instance.
+   *
+   * Precondition:
+   * - clause is not empty
+   * - no literal is listed twice
+   * - no variable is listed both as a positive and negative literal
+   */
+  void add_clause(std::vector<LiteralID>& clause);
+
+  /**
+   * Must be called after having added all clauses.
+   *
+   * @param[in] nVars number of used variables
+   * @param[in] nCls number of added clauses
+   */
+  void finalize(unsigned int nVars, unsigned int nCls);
+
 protected:
 
   void unSet(LiteralID lit) {
@@ -83,11 +115,13 @@ protected:
 
   DataAndStatistics statistics_;
 
-  /** literal_pool_: the literals of all clauses are stored here
-   *   INVARIANT: first and last entries of literal_pool_ are a SENTINEL_LIT
-   *
-   *   Clauses begin with a ClauseHeader structure followed by the literals
-   *   terminated by SENTINEL_LIT
+  /** 
+   * All clauses are stored here.
+   * 
+   * _Format:_
+   * - First literal is \ref SENTINEL_LIT.
+   * - Every clause begins with a \ref ClauseHeader structure
+   *   followed by the literals terminated by SENTINEL_LIT. 
    */
   std::vector<LiteralID> literal_pool_;
 
@@ -95,11 +129,24 @@ protected:
   // conflict clauses
   unsigned original_lit_pool_size_;
 
+  //! Literal-related data, indexed by LiteralID.
   LiteralIndexedVector<Literal> literals_;
 
-  LiteralIndexedVector<std::vector<ClauseOfs> > occurrence_lists_;
+  /*!
+   * Non-unit non-binary clauses, in which a literal appears.
+   * 
+   * Outer index is the \ref LiteralID. Inner vectors are sorted initially
+   * (order may change during \ref compactClauses() - to be verified).
+   * Values are clause offset within \ref literal_pool_.
+   * 
+   * _Note:_ Only the non-learnt clauses are stored here.
+   */
+  LiteralIndexedVector<std::vector<ClauseOfs>> occurrence_lists_;
 
+  //! Offsets of clauses learnt on conflict analysis.
   std::vector<ClauseOfs> conflict_clauses_;
+
+  //! Clauses with only 1 literal.
   std::vector<LiteralID> unit_clauses_;
 
   std::vector<Variable> variables_;
@@ -205,11 +252,18 @@ protected:
         return true;
     return false;
   }
-};
+}; // Instance
 
+/*!
+ * Internal method to add a new clause.
+ * 
+ * @returns ID of its first literal within \ref literal_pool_
+ *          or 0 if the clause was neither unit, nor binary
+ */
 ClauseIndex Instance::addClause(std::vector<LiteralID> &literals) {
   if (literals.size() == 1) {
-    //TODO Deal properly with the situation that opposing unit clauses are learned
+    // TODO Deal properly with the situation that opposing unit clauses are learned.
+    //      This should probably call addUnitClause(literals[0]) and inspect retval.
     assert(!isUnitClause(literals[0].neg()));
     unit_clauses_.push_back(literals[0]);
     return 0;
@@ -218,23 +272,42 @@ ClauseIndex Instance::addClause(std::vector<LiteralID> &literals) {
     addBinaryClause(literals[0], literals[1]);
     return 0;
   }
+
+  // make room for ClauseHeader in literal_pool_
   for (unsigned i = 0; i < ClauseHeader::overheadInLits(); i++)
     literal_pool_.push_back(0);
-  ClauseOfs cl_ofs = literal_pool_.size();
 
+  // where the literals will start
+  ClauseOfs cl_ofs = literal_pool_.size();  
   for (auto l : literals) {
     literal_pool_.push_back(l);
     literal(l).increaseActivity(1);
   }
+
   // make an end: SENTINEL_LIT
   literal_pool_.push_back(SENTINEL_LIT);
+
+  // register for clause updates
   literal(literals[0]).addWatchLinkTo(cl_ofs);
   literal(literals[1]).addWatchLinkTo(cl_ofs);
+  
+  // Simulate the constructor (!!!) of the ClauseHeader.
+  // Note that the \ref ClauseHeader::length_ is not initialized.
+  // Note that it does not matter, since the field is never read. :-)
   getHeaderOf(cl_ofs).set_creation_time(statistics_.num_conflicts_);
   return cl_ofs;
 }
 
-
+/*!
+ * Adds a clause learnt due to a conflict.
+ *
+ * _Note:_ For whatever reason, \ref occurrence_lists_ is not updated!
+ * See \ref Instance::add_clause for an explanation.
+ * 
+ * @returns a non-Antecedent if the clause is a unit clause,
+ * a Literal-Antecedent if the clause is binary or
+ * a Clause-Antecedent if the clause has 3 or more literals
+ */
 Antecedent Instance::addUIPConflictClause(std::vector<LiteralID> &literals) {
     Antecedent ante(NOT_A_CLAUSE);
     statistics_.num_clauses_learned_++;

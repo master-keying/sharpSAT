@@ -280,17 +280,12 @@ bool Instance::markClauseDeleted(ClauseOfs cl_ofs){
 }
 
 
-bool Instance::createfromFile(const string &file_name) {
-  unsigned int nVars, nCls;
-  int lit;
-  unsigned max_ignore = 1000000;
-  unsigned clauses_added = 0;
-  LiteralID llit;
-  vector<LiteralID> literals;
-  string idstring;
-  char c;
+void Instance::initialize(
+    unsigned int nVars,
+    unsigned int nCls,
+    unsigned int poolSize) {
 
-  // clear everything
+  // 1) Clear everything
   literal_pool_.clear();
   literal_pool_.push_back(SENTINEL_LIT);
 
@@ -299,40 +294,86 @@ bool Instance::createfromFile(const string &file_name) {
   literal_values_.clear();
   unit_clauses_.clear();
 
-  ///BEGIN File input
-  ifstream input_file(file_name);
-  if (!input_file) {
-    cerr << "Cannot open file: " << file_name << endl;
-    exit(0);
-  }
-
-  struct stat filestatus;
-  stat(file_name.c_str(), &filestatus);
-
-  literals.reserve(10000);
-  while (input_file >> c && c != 'p')
-    input_file.ignore(max_ignore, '\n');
-  if (!(input_file >> idstring && idstring == "cnf" && input_file >> nVars
-      && input_file >> nCls)) {
-    cerr << "Invalid CNF file" << endl;
-    exit(0);
-  }
-
+  // 2) Allocate correct sizes
   variables_.resize(nVars + 1);
   literal_values_.resize(nVars + 1, TriValue::X_TRI);
-  literal_pool_.reserve(filestatus.st_size);
+  literal_pool_.reserve(poolSize);
   conflict_clauses_.reserve(2*nCls);
   occurrence_lists_.clear();
   occurrence_lists_.resize(nVars + 1);
 
   literals_.clear();
   literals_.resize(nVars + 1);
+}
+
+
+void Instance::add_clause(std::vector<LiteralID>& literals) {
+  assert(!literals.empty());
+  statistics_.incorporateClauseData(literals);
+  ClauseOfs cl_ofs = addClause(literals);
+  if (literals.size() >= 3) {
+    assert(cl_ofs > 0);
+    for (auto l : literals)
+      occurrence_lists_[l].push_back(cl_ofs);
+  }
+}
+
+
+void Instance::finalize(unsigned int nVars, unsigned int nCls) {
+  statistics_.num_variables_ = statistics_.num_original_variables_ = nVars;
+  statistics_.num_used_variables_ = num_variables();
+  statistics_.num_free_variables_ = nVars - num_variables();
+
+  statistics_.num_original_clauses_ = nCls;
+
+  statistics_.num_original_binary_clauses_ = statistics_.num_binary_clauses_;
+  statistics_.num_original_unit_clauses_ = statistics_.num_unit_clauses_ =
+      unit_clauses_.size();
+
+  original_lit_pool_size_ = literal_pool_.size();
+}
+
+
+bool Instance::createfromFile(const string &file_name) {
+  unsigned int nVars; // #variables in the file
+  unsigned int nCls; // #clauses in the file
+  unsigned clauses_added = 0; // #clauses added to the instance
+
+  // Start reading the file
+  ifstream input_file(file_name);
+  if (!input_file) {
+    cerr << "Cannot open file: " << file_name << endl;
+    exit(0);
+  }
+
+  char c;
+  // fast-forward to the 'p [variables] [clauses]' line
+  while (input_file >> c && c != 'p')
+    input_file.ignore(numeric_limits<streamsize>::max(), '\n');
+
+  string idstring;
+  if (!(input_file >> idstring && idstring == "cnf" && input_file >> nVars
+      && input_file >> nCls)) {
+    cerr << "Invalid CNF file" << endl;
+    exit(1);
+  }
+
+  // estimate literal count
+  struct stat filestatus;
+  stat(file_name.c_str(), &filestatus);
+  // prepare to be filled 
+  initialize(nVars, nCls, filestatus.st_size);
+
+  
+  vector<LiteralID> literals;
+  literals.reserve(10000);
 
   while ((input_file >> c) && clauses_added < nCls) {
     input_file.unget(); //extracted a nonspace character to determine if we have a clause, so put it back
     if ((c == '-') || isdigit(c)) {
       literals.clear();
       bool skip_clause = false;
+      int lit; // current literal
       while ((input_file >> lit) && lit != 0) {
         bool duplicate_literal = false;
         for (auto i : literals) {
@@ -350,32 +391,15 @@ bool Instance::createfromFile(const string &file_name) {
         }
       }
       if (!skip_clause) {
-        assert(!literals.empty());
         clauses_added++;
-        statistics_.incorporateClauseData(literals);
-        ClauseOfs cl_ofs = addClause(literals);
-        if (literals.size() >= 3)
-          for (auto l : literals)
-            occurrence_lists_[l].push_back(cl_ofs);
+        add_clause(literals);
       }
     }
-    input_file.ignore(max_ignore, '\n');
+    input_file.ignore(numeric_limits<streamsize>::max(), '\n');
   }
-  ///END NEW
-  input_file.close();
-  //  /// END FILE input
 
-  statistics_.num_variables_ = statistics_.num_original_variables_ = nVars;
-  statistics_.num_used_variables_ = num_variables();
-  statistics_.num_free_variables_ = nVars - num_variables();
-
-  statistics_.num_original_clauses_ = nCls;
-
-  statistics_.num_original_binary_clauses_ = statistics_.num_binary_clauses_;
-  statistics_.num_original_unit_clauses_ = statistics_.num_unit_clauses_ =
-      unit_clauses_.size();
-
-  original_lit_pool_size_ = literal_pool_.size();
+  // all done
+  finalize(nVars, nCls);
   return true;
 }
 
