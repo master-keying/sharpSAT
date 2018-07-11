@@ -5,8 +5,8 @@
  *      Author: Marc Thurley
  */
 
-#ifndef INSTANCE_H_
-#define INSTANCE_H_
+#ifndef SHARP_SAT_INSTANCE_H_
+#define SHARP_SAT_INSTANCE_H_
 
 #include <sharpSAT/statistics.h>
 #include <sharpSAT/structures.h>
@@ -14,14 +14,16 @@
 
 #include <assert.h>
 
+namespace sharpSAT {
+
 class Instance {
 protected:
 
   void unSet(LiteralID lit) {
     var(lit).ante = Antecedent(NOT_A_CLAUSE);
     var(lit).decision_level = INVALID_DL;
-    literal_values_[lit] = X_TRI;
-    literal_values_[lit.neg()] = X_TRI;
+    literal_values_[lit] = TriValue::X_TRI;
+    literal_values_[lit.neg()] = TriValue::X_TRI;
   }
 
   Antecedent & getAntecedent(LiteralID lit) {
@@ -77,7 +79,7 @@ protected:
     return variables_.size() - 1;
   }
 
-  bool createfromFile(const string &file_name);
+  bool createfromFile(const std::string &file_name);
 
   DataAndStatistics statistics_;
 
@@ -87,7 +89,7 @@ protected:
    *   Clauses begin with a ClauseHeader structure followed by the literals
    *   terminated by SENTINEL_LIT
    */
-  vector<LiteralID> literal_pool_;
+  std::vector<LiteralID> literal_pool_;
 
   // this is to determine the starting offset of
   // conflict clauses
@@ -95,12 +97,12 @@ protected:
 
   LiteralIndexedVector<Literal> literals_;
 
-  LiteralIndexedVector<vector<ClauseOfs> > occurrence_lists_;
+  LiteralIndexedVector<std::vector<ClauseOfs> > occurrence_lists_;
 
-  vector<ClauseOfs> conflict_clauses_;
-  vector<LiteralID> unit_clauses_;
+  std::vector<ClauseOfs> conflict_clauses_;
+  std::vector<LiteralID> unit_clauses_;
 
-  vector<Variable> variables_;
+  std::vector<Variable> variables_;
   LiteralIndexedVector<TriValue> literal_values_;
 
   void decayActivities() {
@@ -148,12 +150,12 @@ protected:
     return true;
   }
 
-  inline ClauseIndex addClause(vector<LiteralID> &literals);
+  inline ClauseIndex addClause(std::vector<LiteralID> &literals);
 
   // adds a UIP Conflict Clause
   // and returns it as an Antecedent to the first
   // literal stored in literals
-  inline Antecedent addUIPConflictClause(vector<LiteralID> &literals);
+  inline Antecedent addUIPConflictClause(std::vector<LiteralID> &literals);
 
   inline bool addBinaryClause(LiteralID litA, LiteralID litB);
 
@@ -170,21 +172,21 @@ protected:
   }
 
   inline bool isSatisfied(const LiteralID &lit) const {
-    return literal_values_[lit] == T_TRI;
+    return literal_values_[lit] == TriValue::T_TRI;
   }
 
   bool isResolved(LiteralID lit) {
-    return literal_values_[lit] == F_TRI;
+    return literal_values_[lit] == TriValue::F_TRI;
   }
 
   bool isActive(LiteralID lit) const {
-    return literal_values_[lit] == X_TRI;
+    return literal_values_[lit] == TriValue::X_TRI;
   }
 
-  vector<LiteralID>::const_iterator beginOf(ClauseOfs cl_ofs) const {
+  std::vector<LiteralID>::const_iterator beginOf(ClauseOfs cl_ofs) const {
     return literal_pool_.begin() + cl_ofs;
   }
-  vector<LiteralID>::iterator beginOf(ClauseOfs cl_ofs) {
+  std::vector<LiteralID>::iterator beginOf(ClauseOfs cl_ofs) {
     return literal_pool_.begin() + cl_ofs;
   }
 
@@ -205,7 +207,7 @@ protected:
   }
 };
 
-ClauseIndex Instance::addClause(vector<LiteralID> &literals) {
+ClauseIndex Instance::addClause(std::vector<LiteralID> &literals) {
   if (literals.size() == 1) {
     //TODO Deal properly with the situation that opposing unit clauses are learned
     assert(!isUnitClause(literals[0].neg()));
@@ -233,7 +235,7 @@ ClauseIndex Instance::addClause(vector<LiteralID> &literals) {
 }
 
 
-Antecedent Instance::addUIPConflictClause(vector<LiteralID> &literals) {
+Antecedent Instance::addUIPConflictClause(std::vector<LiteralID> &literals) {
     Antecedent ante(NOT_A_CLAUSE);
     statistics_.num_clauses_learned_++;
     ClauseOfs cl_ofs = addClause(literals);
@@ -258,6 +260,5 @@ bool Instance::addBinaryClause(LiteralID litA, LiteralID litB) {
    literal(litB).increaseActivity();
    return true;
  }
-
-
+} // sharpSAT namespace
 #endif /* INSTANCE_H_ */

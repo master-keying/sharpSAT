@@ -7,6 +7,10 @@
 
 #include <sharpSAT/component_management.h>
 
+using namespace std;
+
+namespace sharpSAT {
+
 void ComponentManager::initialize(LiteralIndexedVector<Literal> & literals,
     vector<LiteralID> &lit_pool) {
 
@@ -48,3 +52,4 @@ void ComponentManager::removeAllCachePollutionsOf(StackLevel &top) {
   cache_.test_descendantstree_consistency();
 #endif
 }
+} // sharpSAT namespace

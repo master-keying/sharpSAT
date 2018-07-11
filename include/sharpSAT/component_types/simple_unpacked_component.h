@@ -5,12 +5,14 @@
  *      Author: mthurley
  */
 
-#ifndef SIMPLE_UNPACKED_COMPONENT_H_
-#define SIMPLE_UNPACKED_COMPONENT_H_
+#ifndef SHARP_SAT_SIMPLE_UNPACKED_COMPONENT_H_
+#define SHARP_SAT_SIMPLE_UNPACKED_COMPONENT_H_
 
 #include <sharpSAT/component_types/base_packed_component.h>
 #include <sharpSAT/component_types/component.h>
 #include <sharpSAT/primitive_types.h>
+
+namespace sharpSAT {
 
 class SimpleUnpackedComponent : public BasePackedComponent {
 public:
@@ -78,7 +80,5 @@ SimpleUnpackedComponent::SimpleUnpackedComponent(Component &rComp) {
   assert(p - data_ + 1 == data_size);
 
 }
-
-
-
+} // sharpSAT namespace
 #endif /* SIMPLE_UNPACKED_COMPONENT_H_ */

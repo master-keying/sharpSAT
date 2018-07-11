@@ -5,8 +5,8 @@
  *      Author: Marc Thurley
  */
 
-#ifndef COMPONENT_MANAGEMENT_H_
-#define COMPONENT_MANAGEMENT_H_
+#ifndef SHARP_SAT_COMPONENT_MANAGEMENT_H_
+#define SHARP_SAT_COMPONENT_MANAGEMENT_H_
 
 
 
@@ -19,7 +19,8 @@
 
 #include <vector>
 #include <gmpxx.h>
-using namespace std;
+
+namespace sharpSAT {
 
 typedef AltComponentAnalyzer ComponentAnalyzer;
 
@@ -32,7 +33,7 @@ public:
   }
 
   void initialize(LiteralIndexedVector<Literal> & literals,
-        vector<LiteralID> &lit_pool);
+        std::vector<LiteralID> &lit_pool);
 
   unsigned scoreOf(VariableIndex v) {
       return ana_.scoreOf(v);
@@ -89,7 +90,7 @@ private:
 
   SolverConfiguration &config_;
 
-  vector<Component *> component_stack_;
+  std::vector<Component *> component_stack_;
   ComponentCache cache_;
   ComponentAnalyzer ana_;
 };
@@ -102,7 +103,7 @@ void ComponentManager::sortComponentStackRange(unsigned start, unsigned end){
       for (unsigned j = i + 1; j < end; j++) {
         if (component_stack_[i]->num_variables()
             < component_stack_[j]->num_variables())
-          swap(component_stack_[i], component_stack_[j]);
+          std::swap(component_stack_[i], component_stack_[j]);
       }
   }
 
@@ -145,5 +146,5 @@ void ComponentManager::recordRemainingCompsFor(StackLevel &top) {
    top.set_unprocessed_components_end(component_stack_.size());
    sortComponentStackRange(new_comps_start_ofs, component_stack_.size());
 }
-
+} // sharpSAT namespace
 #endif /* COMPONENT_MANAGEMENT_H_ */

@@ -7,7 +7,9 @@
 
 #include <sharpSAT/new_component_analyzer.h>
 
+using namespace std;
 
+namespace sharpSAT {
 
 void NewComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
     vector<LiteralID> &lit_pool) {
@@ -160,3 +162,4 @@ void NewComponentAnalyzer::recordComponentOf(const VariableIndex var) {
     }
   }
 }
+} // sharpSAT namespace

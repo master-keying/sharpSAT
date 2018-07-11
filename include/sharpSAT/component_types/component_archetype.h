@@ -5,8 +5,8 @@
  *      Author: mthurley
  */
 
-#ifndef COMPONENT_ARCHETYPE_H_
-#define COMPONENT_ARCHETYPE_H_
+#ifndef SHARP_SAT_COMPONENT_ARCHETYPE_H_
+#define SHARP_SAT_COMPONENT_ARCHETYPE_H_
 
 
 #include <sharpSAT/primitive_types.h>
@@ -21,22 +21,48 @@
 
 
 #include <iostream>
-// State values for variables found during component
-// analysis (CA)
-typedef unsigned char CA_SearchState;
-#define   CA_NIL  0
-#define   CA_VAR_IN_SUP_COMP_UNSEEN  1
-#define   CA_VAR_SEEN 2
-#define   CA_VAR_IN_OTHER_COMP  4
 
-#define   CA_VAR_MASK  7
+namespace sharpSAT {
 
-#define   CA_CL_IN_SUP_COMP_UNSEEN  8
-#define   CA_CL_SEEN 16
-#define   CA_CL_IN_OTHER_COMP  32
-#define   CA_CL_ALL_LITS_ACTIVE  64
+namespace {
+  //! Extracts the underlying
+  template <typename E>
+  constexpr typename std::underlying_type<E>::type to_underlying(E e) noexcept {
+      return static_cast<typename std::underlying_type<E>::type>(e);
+  }
+}
 
-#define   CA_CL_MASK  120
+//! State values for variables found during component analysis (CA)
+enum CA_SearchState : unsigned char {
+  NIL = 0,
+  VAR_IN_SUP_COMP_UNSEEN = 1,
+  VAR_SEEN = 2,
+  VAR_IN_OTHER_COMP = 4,
+  VAR_MASK = 7,
+  CL_IN_SUP_COMP_UNSEEN = 8,
+  CL_SEEN = 16,
+  CL_IN_OTHER_COMP = 32,
+  CL_ALL_LITS_ACTIVE = 64,
+  CL_MASK = 120
+};
+
+inline CA_SearchState operator &(const CA_SearchState& lhs, const CA_SearchState& rhs) {
+  return CA_SearchState(to_underlying(lhs) & to_underlying(rhs));
+}
+
+inline CA_SearchState operator |(const CA_SearchState& lhs, const CA_SearchState& rhs) {
+  return CA_SearchState(to_underlying(lhs) | to_underlying(rhs));
+}
+
+inline CA_SearchState& operator &=(CA_SearchState& lhs, const CA_SearchState& rhs) {
+  return lhs = lhs & rhs;
+}
+
+inline CA_SearchState& operator |=(CA_SearchState& lhs, const CA_SearchState& rhs) {
+  return lhs = lhs | rhs;
+}
+
+
 
 class StackLevel;
 
@@ -64,80 +90,84 @@ public:
   }
 
   void setVar_in_sup_comp_unseen(VariableIndex v) {
-    seen_[v] = CA_VAR_IN_SUP_COMP_UNSEEN | (seen_[v] & CA_CL_MASK);
+    seen_[v] = CA_SearchState::VAR_IN_SUP_COMP_UNSEEN | (seen_[v] & CA_SearchState::CL_MASK);
   }
 
   void setClause_in_sup_comp_unseen(ClauseIndex cl) {
-    seen_[cl] = CA_CL_IN_SUP_COMP_UNSEEN | (seen_[cl] & CA_VAR_MASK);
+    seen_[cl] = CA_SearchState::CL_IN_SUP_COMP_UNSEEN | (seen_[cl] & CA_SearchState::VAR_MASK);
   }
 
   void setVar_nil(VariableIndex v) {
-    seen_[v] &= CA_CL_MASK;
+    seen_[v] &= CA_SearchState::CL_MASK;
   }
 
   void setClause_nil(ClauseIndex cl) {
-    seen_[cl] &= CA_VAR_MASK;
+    seen_[cl] &= CA_SearchState::VAR_MASK;
   }
 
   void setVar_seen(VariableIndex v) {
-    seen_[v] = CA_VAR_SEEN | (seen_[v] & CA_CL_MASK);
+    seen_[v] = CA_SearchState::VAR_SEEN | (seen_[v] & CA_SearchState::CL_MASK);
   }
 
   void setClause_seen(ClauseIndex cl) {
     setClause_nil(cl);
-    seen_[cl] = CA_CL_SEEN | (seen_[cl] & CA_VAR_MASK);
+    seen_[cl] = CA_SearchState::CL_SEEN | (seen_[cl] & CA_SearchState::VAR_MASK);
   }
 
   void setClause_seen(ClauseIndex cl, bool all_lits_act) {
       setClause_nil(cl);
-      seen_[cl] = CA_CL_SEEN | (all_lits_act?CA_CL_ALL_LITS_ACTIVE:0) | (seen_[cl] & CA_VAR_MASK);
+      seen_[cl] = CA_SearchState::CL_SEEN
+                | ( all_lits_act
+                  ? CA_SearchState::CL_ALL_LITS_ACTIVE
+                  : CA_SearchState::NIL )
+                | (seen_[cl] & CA_SearchState::VAR_MASK);
     }
 
   void setVar_in_other_comp(VariableIndex v) {
-    seen_[v] = CA_VAR_IN_OTHER_COMP | (seen_[v] & CA_CL_MASK);
+    seen_[v] = CA_SearchState::VAR_IN_OTHER_COMP | (seen_[v] & CA_SearchState::CL_MASK);
   }
 
   void setClause_in_other_comp(ClauseIndex cl) {
-    seen_[cl] = CA_CL_IN_OTHER_COMP | (seen_[cl] & CA_VAR_MASK);
+    seen_[cl] = CA_SearchState::CL_IN_OTHER_COMP | (seen_[cl] & CA_SearchState::VAR_MASK);
   }
 
   bool var_seen(VariableIndex v) {
-    return seen_[v] & CA_VAR_SEEN;
+    return seen_[v] & CA_SearchState::VAR_SEEN;
   }
 
   bool clause_seen(ClauseIndex cl) {
-    return seen_[cl] & CA_CL_SEEN;
+    return seen_[cl] & CA_SearchState::CL_SEEN;
   }
 
   bool clause_all_lits_active(ClauseIndex cl) {
-    return seen_[cl] & CA_CL_ALL_LITS_ACTIVE;
+    return seen_[cl] & CA_SearchState::CL_ALL_LITS_ACTIVE;
   }
   void setClause_all_lits_active(ClauseIndex cl) {
-    seen_[cl] |= CA_CL_ALL_LITS_ACTIVE;
+    seen_[cl] |= CA_SearchState::CL_ALL_LITS_ACTIVE;
   }
 
   bool var_nil(VariableIndex v) {
-    return (seen_[v] & CA_VAR_MASK) == 0;
+    return (seen_[v] & CA_SearchState::VAR_MASK) == 0;
   }
 
   bool clause_nil(ClauseIndex cl) {
-    return (seen_[cl] & CA_CL_MASK) == 0;
+    return (seen_[cl] & CA_SearchState::CL_MASK) == 0;
   }
 
   bool var_unseen_in_sup_comp(VariableIndex v) {
-    return seen_[v] & CA_VAR_IN_SUP_COMP_UNSEEN;
+    return seen_[v] & CA_SearchState::VAR_IN_SUP_COMP_UNSEEN;
   }
 
   bool clause_unseen_in_sup_comp(ClauseIndex cl) {
-    return seen_[cl] & CA_CL_IN_SUP_COMP_UNSEEN;
+    return seen_[cl] & CA_SearchState::CL_IN_SUP_COMP_UNSEEN;
   }
 
   bool var_seen_in_peer_comp(VariableIndex v) {
-    return seen_[v] & CA_VAR_IN_OTHER_COMP;
+    return seen_[v] & CA_SearchState::VAR_IN_OTHER_COMP;
   }
 
   bool clause_seen_in_peer_comp(ClauseIndex cl) {
-    return seen_[cl] & CA_CL_IN_OTHER_COMP;
+    return seen_[cl] & CA_SearchState::CL_IN_OTHER_COMP;
   }
 
   static void initArrays(unsigned max_variable_id, unsigned max_clause_id) {
@@ -149,7 +179,7 @@ public:
   }
 
   static void clearArrays() {
-    memset(seen_, CA_NIL, seen_byte_size_);
+    memset(seen_, CA_SearchState::NIL, seen_byte_size_);
   }
 
 
@@ -246,6 +276,5 @@ void ComponentArchetype::createComponents(Component&, CacheableComponent, unsign
 //      return p_new_comp;
 
 }
-
-
+} // sharpSAT namespace
 #endif /* COMPONENT_ARCHETYPE_H_ */

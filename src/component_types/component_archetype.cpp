@@ -7,5 +7,9 @@
 
 #include <sharpSAT/component_types/component_archetype.h>
 
+namespace sharpSAT {
+
 CA_SearchState *ComponentArchetype::seen_ = nullptr;
 unsigned ComponentArchetype::seen_byte_size_ = 0;
+
+} // sharpSAT namespace

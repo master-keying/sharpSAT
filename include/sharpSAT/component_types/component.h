@@ -5,15 +5,15 @@
  *      Author: mthurley
  */
 
-#ifndef COMPONENT_H_
-#define COMPONENT_H_
+#ifndef SHARP_SAT_COMPONENT_H_
+#define SHARP_SAT_COMPONENT_H_
 
 #include <assert.h>
 #include <vector>
 
 #include <sharpSAT/primitive_types.h>
 
-using namespace std;
+namespace sharpSAT {
 
 class Component {
 public:
@@ -54,11 +54,11 @@ public:
     assert(*(clsBegin()-1) == 0);
   }
 
-  vector<VariableIndex>::const_iterator varsBegin() const {
+  std::vector<VariableIndex>::const_iterator varsBegin() const {
     return data_.begin();
   }
 
-  vector<ClauseIndex>::const_iterator clsBegin() const {
+  std::vector<ClauseIndex>::const_iterator clsBegin() const {
     return data_.begin() + clauses_ofs_;
   }
 
@@ -99,7 +99,7 @@ private:
   // variables SENTINEL clauses SENTINEL
   // this order has to be taken care of on filling
   // in the data!
-  vector<unsigned> data_;
+  std::vector<unsigned> data_;
   unsigned clauses_ofs_ = 0;
   // id_ will identify denote the entry in the cacheable component database,
   // where a Packed version of this component is stored
@@ -108,7 +108,5 @@ private:
   // in the hash table
   CacheEntryID id_ = 0;
 };
-
-
-
+} // sharpSAT namespace
 #endif /* COMPONENT_H_ */

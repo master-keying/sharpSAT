@@ -5,9 +5,10 @@
  *      Author: Marc Thurley
  */
 
-#ifndef SOLVER_CONFIG_H_
-#define SOLVER_CONFIG_H_
+#ifndef SHARP_SAT_SOLVER_CONFIG_H_
+#define SHARP_SAT_SOLVER_CONFIG_H_
 
+namespace sharpSAT {
 
 struct SolverConfiguration {
 
@@ -24,6 +25,6 @@ struct SolverConfiguration {
 
   // quiet = true will override verbose;
   bool quiet = false;
-};
-
+}; // SolverConfiguration
+} // sharpSAT namespace
 #endif /* SOLVER_CONFIG_H_ */

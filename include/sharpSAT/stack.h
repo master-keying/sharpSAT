@@ -5,14 +5,14 @@
  *      Author: Marc Thurley
  */
 
-#ifndef STACK_H_
-#define STACK_H_
+#ifndef SHARP_SAT_STACK_H_
+#define SHARP_SAT_STACK_H_
 
 #include <cassert>
 #include <vector>
 #include <gmpxx.h>
 
-using std::vector;
+namespace sharpSAT {
 
 class StackLevel {
   /// active Component, once initialized, it should not change
@@ -137,9 +137,9 @@ public:
   const mpz_class getTotalModelCount() const {
     return branch_model_count_[0] + branch_model_count_[1];
   }
-};
+}; // StackLevel
 
-class DecisionStack: public vector<StackLevel> {
+class DecisionStack: public std::vector<StackLevel> {
   unsigned int failed_literal_test_active = 0;
 public:
 
@@ -160,9 +160,6 @@ public:
     assert(size() > 0);
     return size() - 1 + failed_literal_test_active;
   } // 0 means pre-1st-decision
-
-};
-
-
-
+}; // DecisionStack
+} // sharpSAT namespace
 #endif /* STACK_H_ */

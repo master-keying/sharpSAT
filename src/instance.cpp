@@ -13,6 +13,8 @@
 
 using namespace std;
 
+namespace sharpSAT {
+
 void Instance::cleanClause(ClauseOfs cl_ofs) {
   bool satisfied = false;
   for (auto it = beginOf(cl_ofs); *it != SENTINEL_LIT; it++)
@@ -135,7 +137,7 @@ void Instance::compactVariables() {
   literals_.clear();
   literals_.resize(variables_.size());
   literal_values_.clear();
-  literal_values_.resize(variables_.size(), X_TRI);
+  literal_values_.resize(variables_.size(), TriValue::X_TRI);
 
   unsigned bin_links = 0;
   LiteralID newlit;
@@ -176,7 +178,7 @@ void Instance::compactVariables() {
   }
 
   literal_values_.clear();
-  literal_values_.resize(variables_.size(), X_TRI);
+  literal_values_.resize(variables_.size(), TriValue::X_TRI);
   unit_clauses_.clear();
 
   statistics_.num_variables_ = variables_.size() - 1 + num_isolated;
@@ -317,7 +319,7 @@ bool Instance::createfromFile(const string &file_name) {
   }
 
   variables_.resize(nVars + 1);
-  literal_values_.resize(nVars + 1, X_TRI);
+  literal_values_.resize(nVars + 1, TriValue::X_TRI);
   literal_pool_.reserve(filestatus.st_size);
   conflict_clauses_.reserve(2*nCls);
   occurrence_lists_.clear();
@@ -377,3 +379,4 @@ bool Instance::createfromFile(const string &file_name) {
   return true;
 }
 
+} // sharpSAT namespace

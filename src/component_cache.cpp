@@ -15,6 +15,7 @@
 #include <sys/sysinfo.h>
 #include <cstdint>
 
+namespace sharpSAT {
 uint64_t freeram() {
 
   struct sysinfo info;
@@ -22,6 +23,7 @@ uint64_t freeram() {
 
   return info.freeram *(uint64_t) info.mem_unit;
 }
+} // sharpSAT namespace
 
 #elif __APPLE__ && __MACH__
 
@@ -29,6 +31,7 @@ uint64_t freeram() {
 #include <sys/sysctl.h>
 
 
+namespace sharpSAT {
 uint64_t freeram() {
 
   int mib[2];
@@ -40,13 +43,16 @@ uint64_t freeram() {
 
   return physical_memory;
 }
+} // sharpSAT namespace
 
 #else
 // ToDo: Provide something like freeram
 #error "freeram function not provided for this platform"
 #endif
 
+using namespace std;
 
+namespace sharpSAT {
 
 ComponentCache::ComponentCache(DataAndStatistics &statistics) :
 		statistics_(statistics) {
@@ -220,8 +226,4 @@ void ComponentCache::debug_dump_data(){
               }
     cout << "model counts size " << alloc_model_counts << endl;
 }
-
-
-
-
-
+} // sharpSAT namespace

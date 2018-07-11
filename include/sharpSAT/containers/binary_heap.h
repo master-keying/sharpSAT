@@ -5,12 +5,13 @@
  *      Author: mthurley
  */
 
-#ifndef BINARY_HEAP_H_
-#define BINARY_HEAP_H_
+#ifndef SHARP_SAT_BINARY_HEAP_H_
+#define SHARP_SAT_BINARY_HEAP_H_
 
 #include <assert.h>
 #include <vector>
 
+namespace sharpSAT {
 
 template <class Comparator>
 class BinaryHeap {
@@ -153,5 +154,5 @@ void BinaryHeap<Comparator>::test_checkRep(){
     if(right < values_.size()) assert(!less_(values_[k],values_[right]));
   }
 }
-
+} // sharpSAT namespace
 #endif /* BINARY_HEAP_H_ */

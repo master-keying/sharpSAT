@@ -5,8 +5,8 @@
  *      Author: mthurley
  */
 
-#ifndef ALT_COMPONENT_ANALYZER_H_
-#define ALT_COMPONENT_ANALYZER_H_
+#ifndef SHARP_SAT_ALT_COMPONENT_ANALYZER_H_
+#define SHARP_SAT_ALT_COMPONENT_ANALYZER_H_
 
 
 
@@ -22,7 +22,7 @@
 #include <cmath>
 #include <gmpxx.h>
 
-using namespace std;
+namespace sharpSAT {
 
 class AltComponentAnalyzer {
 public:
@@ -39,7 +39,7 @@ public:
   }
 
   void initialize(LiteralIndexedVector<Literal> & literals,
-      vector<LiteralID> &lit_pool);
+      std::vector<LiteralID> &lit_pool);
 
 
   bool isUnseenAndActive(VariableIndex v){
@@ -121,7 +121,7 @@ private:
 
   // this contains clause offsets of the clauses
   // where each variable occurs in;
-  vector<ClauseOfs> variable_occurrence_lists_pool_;
+  std::vector<ClauseOfs> variable_occurrence_lists_pool_;
 
   // this is a new idea,
   // for every variable we have a list
@@ -129,32 +129,32 @@ private:
   // this should give better cache behaviour,
   // because all links of one variable (binary and nonbinray) are found
   // in one contiguous chunk of memory
-  vector<unsigned> unified_variable_links_lists_pool_;
+  std::vector<unsigned> unified_variable_links_lists_pool_;
 
 
-  vector<unsigned> variable_link_list_offsets_;
+  std::vector<unsigned> variable_link_list_offsets_;
 
   LiteralIndexedVector<TriValue> & literal_values_;
 
-  vector<unsigned> var_frequency_scores_;
+  std::vector<unsigned> var_frequency_scores_;
 
   ComponentArchetype  archetype_;
 
-  vector<VariableIndex> search_stack_;
+  std::vector<VariableIndex> search_stack_;
 
   bool isResolved(const LiteralID lit) {
-    return literal_values_[lit] == F_TRI;
+    return literal_values_[lit] == TriValue::F_TRI;
   }
 
   bool isSatisfied(const LiteralID lit) {
-    return literal_values_[lit] == T_TRI;
+    return literal_values_[lit] == TriValue::T_TRI;
   }
   bool isActive(const LiteralID lit) {
-      return literal_values_[lit] == X_TRI;
+      return literal_values_[lit] == TriValue::X_TRI;
   }
 
   bool isActive(const VariableIndex v) {
-    return literal_values_[LiteralID(v, true)] == X_TRI;
+    return literal_values_[LiteralID(v, true)] == TriValue::X_TRI;
   }
 
   unsigned *beginOfLinkList(VariableIndex v) {
@@ -169,8 +169,8 @@ private:
   void recordComponentOf(const VariableIndex var);
 
 
-  void getClause(vector<unsigned> &tmp,
-   		       vector<LiteralID>::iterator & it_start_of_cl,
+  void getClause(std::vector<unsigned> &tmp,
+   		       std::vector<LiteralID>::iterator & it_start_of_cl,
    		       LiteralID & omitLit){
   	  tmp.clear();
   	  for (auto it_lit = it_start_of_cl;*it_lit != SENTINEL_LIT; it_lit++) {
@@ -251,6 +251,5 @@ private:
 //      }
 //    }
 };
-
-
+} // sharpSAT namespace
 #endif /* ALT_COMPONENT_ANALYZER_H_ */

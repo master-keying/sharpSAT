@@ -12,6 +12,8 @@
 
 using namespace std;
 
+namespace sharpSAT {
+
 void DataAndStatistics::print_final_solution_count() {
   cout << final_solution_count_.get_str();
 }
@@ -34,7 +36,7 @@ void DataAndStatistics::writeToFile(const string & file_name) {
 }
 
 void DataAndStatistics::printShort() {
-  if (exit_state_ == TIMEOUT) {
+  if (exit_state_ == SOLVER_StateT::TIMEOUT) {
     cout << endl << " TIMEOUT !" << endl;
     return;
   }
@@ -84,3 +86,4 @@ void DataAndStatistics::printShort() {
   cout << "\n# END" << endl << endl;
   cout << "time: " << time_elapsed_ << "s\n\n";
 }
+} // sharpSAT namespace

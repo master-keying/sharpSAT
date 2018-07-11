@@ -8,6 +8,8 @@
 #include <math.h>
 #include <iostream>
 
+namespace sharpSAT {
+
 unsigned BasePackedComponent::_bits_per_clause = 0;
 unsigned BasePackedComponent::_bits_per_variable = 0; // bitsperentry
 unsigned BasePackedComponent::_variable_mask = 0;
@@ -34,6 +36,4 @@ void BasePackedComponent::adjustPackSize(unsigned int maxVarId,
     _data_size_mask = (_data_size_mask << 1) + 1;
 }
 
-
-
-
+} // sharpSAT namespace

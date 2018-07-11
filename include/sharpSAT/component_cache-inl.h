@@ -5,8 +5,10 @@
  *      Author: Marc Thurley
  */
 
-#ifndef COMPONENT_CACHE_INL_H_
-#define COMPONENT_CACHE_INL_H_
+#ifndef SHARP_SAT_COMPONENT_CACHE_INL_H_
+#define SHARP_SAT_COMPONENT_CACHE_INL_H_
+
+namespace sharpSAT {
 
 CacheEntryID ComponentCache::storeAsEntry(CacheableComponent &ccomp, CacheEntryID super_comp_id){
     CacheEntryID id;
@@ -161,9 +163,5 @@ void ComponentCache::storeValueOf(CacheEntryID id, const mpz_class &model_count)
    statistics_.sys_overhead_overall_bytes_components_stored_ += entry(id).sys_overhead_SizeInBytes();
 
 }
-
-
-
-
-
+} // sharpSAT namespace
 #endif /* COMPONENT_CACHE_INL_H_ */

@@ -5,8 +5,8 @@
  *      Author: marc
  */
 
-#ifndef SOLVER_H_
-#define SOLVER_H_
+#ifndef SHARP_SAT_SOLVER_H_
+#define SHARP_SAT_SOLVER_H_
 
 
 #include <sharpSAT/statistics.h>
@@ -16,7 +16,9 @@
 
 #include <sys/time.h>
 
-enum retStateT {
+namespace sharpSAT {
+
+enum class retStateT {
 	EXIT, RESOLVED, PROCESS_COMPONENT, BACKTRACK
 };
 
@@ -85,7 +87,7 @@ public:
 		stopwatch_.setTimeBound(config_.time_bound_seconds);
 	}
 
-	void solve(const string & file_name);
+	void solve(const std::string & file_name);
 
 	SolverConfiguration &config() {
 		return config_;
@@ -102,7 +104,7 @@ private:
 	SolverConfiguration config_;
 
 	DecisionStack stack_; // decision stack
-	vector<LiteralID> literal_stack_;
+	std::vector<LiteralID> literal_stack_;
 
 	StopWatch stopwatch_;
 
@@ -166,22 +168,22 @@ private:
 
 	bool setLiteralIfFree(LiteralID lit,
 			Antecedent ant = Antecedent(NOT_A_CLAUSE)) {
-		if (literal_values_[lit] != X_TRI)
+		if (literal_values_[lit] != TriValue::X_TRI)
 			return false;
 		var(lit).decision_level = stack_.get_decision_level();
 		var(lit).ante = ant;
 		literal_stack_.push_back(lit);
 		if (ant.isAClause() && ant.asCl() != NOT_A_CLAUSE)
 			getHeaderOf(ant.asCl()).increaseScore();
-		literal_values_[lit] = T_TRI;
-		literal_values_[lit.neg()] = F_TRI;
+		literal_values_[lit] = TriValue::T_TRI;
+		literal_values_[lit.neg()] = TriValue::F_TRI;
 		return true;
 	}
 
 	void printOnlineStats();
 
-	void print(vector<LiteralID> &vec);
-	void print(vector<unsigned> &vec);
+	void print(std::vector<LiteralID> &vec);
+	void print(std::vector<unsigned> &vec);
 
 
 	void setConflictState(LiteralID litA, LiteralID litB) {
@@ -196,7 +198,7 @@ private:
 			violated_clause.push_back(*it);
 	}
 
-	vector<LiteralID>::const_iterator TOSLiteralsBegin() {
+	std::vector<LiteralID>::const_iterator TOSLiteralsBegin() {
 		return literal_stack_.begin() + stack_.top().literal_stack_ofs();
 	}
 
@@ -251,7 +253,7 @@ private:
 
 	// if the state name is CONFLICT,
 	// then violated_clause contains the clause determining the conflict;
-	vector<LiteralID> violated_clause;
+	std::vector<LiteralID> violated_clause;
 	// this is an array of all the clauses found
 	// during the most recent conflict analysis
 	// it might contain more than 2 clauses
@@ -259,7 +261,7 @@ private:
 	//      uip_clauses_.front() the 1UIP clause found
 	//      uip_clauses_.back() the lastUIP clause found
 	//  possible clauses in between will be other UIP clauses
-	vector<vector<LiteralID> > uip_clauses_;
+	std::vector<std::vector<LiteralID> > uip_clauses_;
 
 	// the assertion level of uip_clauses_.back()
 	// or (if the decision variable did not have an antecedent
@@ -276,8 +278,8 @@ private:
 	void recordAllUIPCauses();
 
 	void minimizeAndStoreUIPClause(LiteralID uipLit,
-			vector<LiteralID> & tmp_clause, bool seen[]);
-	void storeUIPClause(LiteralID uipLit, vector<LiteralID> & tmp_clause);
+			std::vector<LiteralID> & tmp_clause, bool seen[]);
+	void storeUIPClause(LiteralID uipLit, std::vector<LiteralID> & tmp_clause);
 	int getAssertionLevel() const {
 		return assertion_level_;
 	}
@@ -286,5 +288,5 @@ private:
 	//  END conflict analysis
 	/////////////////////////////////////////////
 };
-
+} // sharpSAT namespace
 #endif /* SOLVER_H_ */

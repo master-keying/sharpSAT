@@ -5,12 +5,14 @@
  *      Author: mthurley
  */
 
-#ifndef SIMPLE_PACKED_COMPONENT_H_
-#define SIMPLE_PACKED_COMPONENT_H_
+#ifndef SHARP_SAT_SIMPLE_PACKED_COMPONENT_H_
+#define SHARP_SAT_SIMPLE_PACKED_COMPONENT_H_
 
 #include <sharpSAT/component_types/base_packed_component.h>
 #include <sharpSAT/component_types/component.h>
 #include <sharpSAT/primitive_types.h>
+
+namespace sharpSAT {
 
 class SimplePackedComponent : public BasePackedComponent {
 public:
@@ -84,5 +86,5 @@ SimplePackedComponent::SimplePackedComponent(Component &rComp) {
 
   hashkey_ = hashkey_vars + (((unsigned) hashkey_clauses) << 16);
 }
-
+} // sharpSAT namespace
 #endif /* SIMPLE_PACKED_COMPONENT_H_ */

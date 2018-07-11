@@ -5,8 +5,8 @@
  *      Author: mthurley
  */
 
-#ifndef COMPONENT_CACHE_H_
-#define COMPONENT_CACHE_H_
+#ifndef SHARP_SAT_COMPONENT_CACHE_H_
+#define SHARP_SAT_COMPONENT_CACHE_H_
 
 
 #include <sharpSAT/stack.h>
@@ -17,7 +17,7 @@
 
 #include <gmpxx.h>
 
-
+namespace sharpSAT {
 
 class ComponentCache {
 public:
@@ -153,12 +153,12 @@ private:
         entry(compid).set_first_descendant(entry(desc).next_sibling());
     }
 
-  vector<CacheableComponent *> entry_base_;
-  vector<CacheEntryID> free_entry_base_slots_;
+  std::vector<CacheableComponent *> entry_base_;
+  std::vector<CacheEntryID> free_entry_base_slots_;
 
   // the actual hash table
   // by means of which the cache is accessed
-  vector<CacheEntryID> table_;
+  std::vector<CacheEntryID> table_;
 
   unsigned table_size_mask_;
 
@@ -166,9 +166,8 @@ private:
 
   unsigned long my_time_ = 0;
 };
-
+} // sharpSAT namespace
 
 #include <sharpSAT/component_cache-inl.h>
-
 
 #endif /* COMPONENT_CACHE_H_ */

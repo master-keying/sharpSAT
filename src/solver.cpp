@@ -8,6 +8,9 @@
 #include <deque>
 #include <algorithm>
 
+using namespace std;
+
+namespace sharpSAT {
 
 StopWatch::StopWatch() {
   interval_length_.tv_sec = 60;
@@ -163,7 +166,7 @@ void Solver::solve(const string &file_name) {
 		statistics_.num_long_conflict_clauses_ = num_conflict_clauses();
 
 	} else {
-		statistics_.exit_state_ = SUCCESS;
+		statistics_.exit_state_ = SOLVER_StateT::SUCCESS;
 		statistics_.set_final_solution_count(0.0);
 		cout << endl << " FOUND UNSAT DURING PREPROCESSING " << endl;
 	}
@@ -182,38 +185,38 @@ void Solver::solve(const string &file_name) {
 }
 
 SOLVER_StateT Solver::countSAT() {
-	retStateT state = RESOLVED;
+	retStateT state = retStateT::RESOLVED;
 
 	while (true) {
 		while (comp_manager_.findNextRemainingComponentOf(stack_.top())) {
 			decideLiteral();
 			if (stopwatch_.timeBoundBroken())
-				return TIMEOUT;
+				return SOLVER_StateT::TIMEOUT;
 			if (stopwatch_.interval_tick())
 				printOnlineStats();
 
 			while (!bcp()) {
 				state = resolveConflict();
-				if (state == BACKTRACK)
+				if (state == retStateT::BACKTRACK)
 					break;
 			}
-			if (state == BACKTRACK)
+			if (state == retStateT::BACKTRACK)
 				break;
 		}
 
 		state = backtrack();
-		if (state == EXIT)
-			return SUCCESS;
-		while (state != PROCESS_COMPONENT && !bcp()) {
+		if (state == retStateT::EXIT)
+			return SOLVER_StateT::SUCCESS;
+		while (state != retStateT::PROCESS_COMPONENT && !bcp()) {
 			state = resolveConflict();
-			if (state == BACKTRACK) {
+			if (state == retStateT::BACKTRACK) {
 				state = backtrack();
-				if (state == EXIT)
-					return SUCCESS;
+				if (state == retStateT::EXIT)
+					return SOLVER_StateT::SUCCESS;
 			}
 		}
 	}
-	return SUCCESS;
+	return SOLVER_StateT::SUCCESS;
 }
 
 void Solver::decideLiteral() {
@@ -260,7 +263,7 @@ retStateT Solver::backtrack() {
 		if (stack_.top().branch_found_unsat())
 			comp_manager_.removeAllCachePollutionsOf(stack_.top());
 		else if (stack_.top().anotherCompProcessible())
-			return PROCESS_COMPONENT;
+			return retStateT::PROCESS_COMPONENT;
 
 		if (!stack_.top().isSecondBranch()) {
 			LiteralID aLit = TOS_decLit();
@@ -268,7 +271,7 @@ retStateT Solver::backtrack() {
 			stack_.top().changeBranch();
 			reactivateTOS();
 			setLiteralIfFree(aLit.neg(), NOT_A_CLAUSE);
-			return RESOLVED;
+			return retStateT::RESOLVED;
 		}
 		// OTHERWISE:  backtrack further
 		comp_manager_.cacheModelCountOf(stack_.top().super_component(),
@@ -288,7 +291,7 @@ retStateT Solver::backtrack() {
 				stack_.top().remaining_components_ofs() < comp_manager_.component_stack_size()+1);
 
 	} while (stack_.get_decision_level() >= 0);
-	return EXIT;
+	return retStateT::EXIT;
 }
 
 retStateT Solver::resolveConflict() {
@@ -321,7 +324,7 @@ retStateT Solver::resolveConflict() {
 	//BEGIN Backtracking
 	// maybe the other branch had some solutions
 	if (stack_.top().isSecondBranch()) {
-		return BACKTRACK;
+		return retStateT::BACKTRACK;
 	}
 
 	Antecedent ant(NOT_A_CLAUSE);
@@ -362,7 +365,7 @@ retStateT Solver::resolveConflict() {
 	reactivateTOS();
 	setLiteralIfFree(lit.neg(), ant);
 //END Backtracking
-	return RESOLVED;
+	return retStateT::RESOLVED;
 }
 
 bool Solver::bcp() {
@@ -871,3 +874,4 @@ void Solver::printOnlineStats() {
 	}
 }
 
+} // sharpSAT namespace

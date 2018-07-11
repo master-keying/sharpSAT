@@ -5,15 +5,15 @@
  *      Author: mthurley
  */
 
-#ifndef DIFFERENCE_PACKED_COMPONENT_H_
-#define DIFFERENCE_PACKED_COMPONENT_H_
+#ifndef SHARP_SAT_DIFFERENCE_PACKED_COMPONENT_H_
+#define SHARP_SAT_DIFFERENCE_PACKED_COMPONENT_H_
 
 #include <sharpSAT/component_types/base_packed_component.h>
 #include <sharpSAT/component_types/component.h>
 
 #include <math.h>
 
-
+namespace sharpSAT {
 
 class DifferencePackedComponent:public BasePackedComponent {
 public:
@@ -209,5 +209,5 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
 //  // correctly
 //  bs.assert_size(data_size);
 //}
-
+} // sharpSAT namespace
 #endif /* DIFFERENCE_PACKED_COMPONENT_H_ */

@@ -8,7 +8,9 @@
 
 #include <sharpSAT/alt_component_analyzer.h>
 
+using namespace std;
 
+namespace sharpSAT {
 
 void AltComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
     vector<LiteralID> &lit_pool) {
@@ -191,3 +193,5 @@ void AltComponentAnalyzer::recordComponentOf(const VariableIndex var) {
         searchClause(*vt,*p, reinterpret_cast<LiteralID *>(p + 1 + *(p+1)));
   }
 }
+
+} // sharpSAT namespace

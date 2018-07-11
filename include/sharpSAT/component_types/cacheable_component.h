@@ -5,8 +5,8 @@
  *      Author: mthurley
  */
 
-#ifndef CACHEABLE_COMPONENT_H_
-#define CACHEABLE_COMPONENT_H_
+#ifndef SHARP_SAT_CACHEABLE_COMPONENT_H_
+#define SHARP_SAT_CACHEABLE_COMPONENT_H_
 
 #include <assert.h>
 #include <vector>
@@ -14,10 +14,7 @@
 #include <sharpSAT/primitive_types.h>
 #include <sharpSAT/component_types/difference_packed_component.h>
 
-
-using namespace std;
-
-#define NIL_ENTRY 0
+namespace sharpSAT {
 
 class Component;
 class ComponentArchetype;
@@ -103,9 +100,5 @@ private:
 
 typedef GenericCacheableComponent<DifferencePackedComponent> CacheableComponent;
 //typedef GenericCacheableComponent<SimplePackedComponent> CacheableComponent;
-
-
-
-
-
+} // sharpSAT namespace
 #endif /* CACHEABLE_COMPONENT_H_ */

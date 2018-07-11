@@ -7,7 +7,7 @@
 #include <sys/resource.h>
 
 using namespace std;
-
+using namespace sharpSAT;
 
 int main(int argc, char *argv[]) {
 

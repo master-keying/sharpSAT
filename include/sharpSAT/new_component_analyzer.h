@@ -5,8 +5,8 @@
  *      Author: mthurley
  */
 
-#ifndef NEW_COMPONENT_ANALYZER_H_
-#define NEW_COMPONENT_ANALYZER_H_
+#ifndef SHARP_SAT_NEW_COMPONENT_ANALYZER_H_
+#define SHARP_SAT_NEW_COMPONENT_ANALYZER_H_
 
 
 
@@ -21,8 +21,7 @@
 #include <cmath>
 #include <gmpxx.h>
 
-using namespace std;
-
+namespace sharpSAT {
 
 struct CAClauseHeader {
   unsigned clause_id = 0;
@@ -53,7 +52,7 @@ public:
   }
 
   void initialize(LiteralIndexedVector<Literal> & literals,
-      vector<LiteralID> &lit_pool);
+      std::vector<LiteralID> &lit_pool);
 
 
   bool isUnseenAndActive(VariableIndex v){
@@ -132,11 +131,11 @@ private:
   // pool of clauses as lists of LiteralIDs
   // Note that with a clause begin position p we have
   // the clause ID at position p-1
-  vector<LiteralID> literal_pool_;
+  std::vector<LiteralID> literal_pool_;
 
   // this contains clause offsets of the clauses
   // where each variable occurs in;
-  vector<ClauseOfs> variable_occurrence_lists_pool_;
+  std::vector<ClauseOfs> variable_occurrence_lists_pool_;
 
   // this is a new idea,
   // for every variable we have a list
@@ -144,27 +143,27 @@ private:
   // this should give better cache behaviour,
   // because all links of one variable (binary and nonbinray) are found
   // in one contiguous chunk of memory
-  vector<unsigned> unified_variable_links_lists_pool_;
+  std::vector<unsigned> unified_variable_links_lists_pool_;
 
-  vector<unsigned> map_clause_id_to_ofs_;
-  vector<unsigned> variable_link_list_offsets_;
+  std::vector<unsigned> map_clause_id_to_ofs_;
+  std::vector<unsigned> variable_link_list_offsets_;
   LiteralIndexedVector<TriValue> & literal_values_;
 
-  vector<unsigned> var_frequency_scores_;
+  std::vector<unsigned> var_frequency_scores_;
 
   ComponentArchetype  archetype_;
 
-  vector<VariableIndex> search_stack_;
+  std::vector<VariableIndex> search_stack_;
 
   bool isResolved(const LiteralID lit) {
-    return literal_values_[lit] == F_TRI;
+    return literal_values_[lit] == TriValue::F_TRI;
   }
 
   bool isSatisfied(const LiteralID lit) {
-    return literal_values_[lit] == T_TRI;
+    return literal_values_[lit] == TriValue::T_TRI;
   }
   bool isActive(const LiteralID lit) {
-      return literal_values_[lit] == X_TRI;
+      return literal_values_[lit] == TriValue::X_TRI;
   }
 
   bool isSatisfiedByFirstTwoLits(ClauseOfs cl_ofs) {
@@ -172,7 +171,7 @@ private:
     }
 
   bool isActive(const VariableIndex v) {
-    return literal_values_[LiteralID(v, true)] == X_TRI;
+    return literal_values_[LiteralID(v, true)] == TriValue::X_TRI;
   }
 
   unsigned getClauseID(ClauseOfs cl_ofs) {
@@ -189,7 +188,7 @@ private:
     return &unified_variable_links_lists_pool_[variable_link_list_offsets_[v]];
   }
 
-  vector<LiteralID>::iterator beginOfClause(ClauseOfs cl_ofs) {
+  std::vector<LiteralID>::iterator beginOfClause(ClauseOfs cl_ofs) {
     return literal_pool_.begin() + cl_ofs;
   }
 
@@ -200,8 +199,8 @@ private:
   // after execution component_search_stack.size()==1
   void recordComponentOf(const VariableIndex var);
 
-  void pushLitsInto(vector<unsigned> &target,
-		       const vector<LiteralID> &lit_pool,
+  void pushLitsInto(std::vector<unsigned> &target,
+		       const std::vector<LiteralID> &lit_pool,
 		       unsigned start_of_cl,
 		       LiteralID & omitLit){
 	  for (auto it_lit = lit_pool.begin() + start_of_cl;
@@ -213,7 +212,5 @@ private:
   }
 
 };
-
-
-
+} // sharpSAT namespace
 #endif /* NEW_COMPONENT_ANALYZER_H_ */

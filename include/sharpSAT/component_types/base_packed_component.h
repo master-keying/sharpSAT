@@ -5,14 +5,14 @@
  *      Author: mthurley
  */
 
-#ifndef BASE_PACKED_COMPONENT_H_
-#define BASE_PACKED_COMPONENT_H_
+#ifndef SHARP_SAT_BASE_PACKED_COMPONENT_H_
+#define SHARP_SAT_BASE_PACKED_COMPONENT_H_
 
 #include <assert.h>
 #include <gmpxx.h>
 #include <iostream>
 
-using namespace std;
+namespace sharpSAT {
 
 template <class T>
  class BitStuffer {
@@ -90,7 +90,7 @@ public:
   }
   static void outbit(unsigned v){
    for(auto i=0; i<32;i++){
-      cout << ((v&2147483648)?"1":"0");
+      std::cout << ((v&2147483648)?"1":"0");
       v&=2147483648-1;
       v <<= 1;
     }
@@ -102,10 +102,13 @@ public:
          // http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogLookup
          static const char LogTable256[256] =
          {
-         #define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
+         #define SHARP_SAT_LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
              -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
-             LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6),
-             LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
+             SHARP_SAT_LT(4), SHARP_SAT_LT(5), SHARP_SAT_LT(5),
+             SHARP_SAT_LT(6), SHARP_SAT_LT(6), SHARP_SAT_LT(6),
+             SHARP_SAT_LT(6), SHARP_SAT_LT(7), SHARP_SAT_LT(7),
+             SHARP_SAT_LT(7), SHARP_SAT_LT(7), SHARP_SAT_LT(7),
+             SHARP_SAT_LT(7), SHARP_SAT_LT(7), SHARP_SAT_LT(7)
          };
 
          unsigned r;     // r will be lg(v)
@@ -208,5 +211,5 @@ protected:
   static const unsigned _bits_per_block= (sizeof(unsigned) << 3);
 
 };
-
+} // sharpSAT namespace
 #endif /* BASE_PACKED_COMPONENT_H_ */

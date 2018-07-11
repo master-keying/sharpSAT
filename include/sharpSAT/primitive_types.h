@@ -5,12 +5,10 @@
  *      Author: mthurley
  */
 
-#ifndef PRIMITIVE_TYPES_H_
-#define PRIMITIVE_TYPES_H_
+#ifndef SHARP_SAT_PRIMITIVE_TYPES_H_
+#define SHARP_SAT_PRIMITIVE_TYPES_H_
 
-#define varsSENTINEL  0
-#define clsSENTINEL   NOT_A_CLAUSE
-
+namespace sharpSAT {
 
 typedef unsigned VariableIndex;
 typedef unsigned ClauseIndex;
@@ -19,22 +17,13 @@ typedef unsigned ClauseOfs;
 typedef unsigned CacheEntryID;
 
 static const ClauseIndex NOT_A_CLAUSE(0);
-#define SENTINEL_CL NOT_A_CLAUSE
+static const auto SENTINEL_CL = NOT_A_CLAUSE;
+static const auto clsSENTINEL = NOT_A_CLAUSE;
+static const VariableIndex varsSENTINEL = 0;
 
-
-enum SOLVER_StateT {
+enum class SOLVER_StateT {
 
   NO_STATE, SUCCESS, TIMEOUT, ABORTED
 };
-
-
-#ifdef DEBUG
-#define toDEBUGOUT(X) cout << X;
-#else
-#define toDEBUGOUT(X)
-#endif
-
-
-
-
+} // sharpSAT namespace
 #endif /* PRIMITIVE_TYPES_H_ */

@@ -5,8 +5,8 @@
  *      Author: mthurley
  */
 
-#ifndef STATISTICS_H_
-#define STATISTICS_H_
+#ifndef SHARP_SAT_STATISTICS_H_
+#define SHARP_SAT_STATISTICS_H_
 
 #include <sharpSAT/structures.h>
 #include <sharpSAT/component_types/cacheable_component.h>
@@ -18,16 +18,15 @@
 
 #include <gmpxx.h>
 
-
-using namespace std;
+namespace sharpSAT {
 
 class DataAndStatistics {
 public:
-  string input_file_;
+  std::string input_file_;
   double time_elapsed_ = 0.0;
   uint64_t maximum_cache_size_bytes_ = 0;
 
-  SOLVER_StateT exit_state_ = NO_STATE;
+  SOLVER_StateT exit_state_ = SOLVER_StateT::NO_STATE;
   // different variable counts
   // number of variables  and clauses before preprocessing
   unsigned long num_original_variables_ = 0;
@@ -168,14 +167,14 @@ public:
     return final_solution_count_;
   }
 
-  void incorporateConflictClauseData(const vector<LiteralID> &clause) {
+  void incorporateConflictClauseData(const std::vector<LiteralID> &clause) {
     if (clause.size() == 1)
       num_unit_clauses_++;
     else if (clause.size() == 2)
       num_binary_conflict_clauses_++;
     num_long_conflict_clauses_++;
   }
-  void incorporateClauseData(const vector<LiteralID> &clause) {
+  void incorporateClauseData(const std::vector<LiteralID> &clause) {
     if (clause.size() == 1)
       num_unit_clauses_++;
     else if (clause.size() == 2)
@@ -185,18 +184,18 @@ public:
   }
 
   void print_final_solution_count();
-  void writeToFile(const string & file_name);
+  void writeToFile(const std::string & file_name);
 
   void printShort();
 
   void printShortFormulaInfo() {
-    cout << "variables (all/used/free): \t";
-    cout << num_variables_ << "/" << num_used_variables_ << "/";
-    cout << num_variables_ - num_used_variables_ << endl;
+    std::cout << "variables (all/used/free): \t";
+    std::cout << num_variables_ << "/" << num_used_variables_ << "/";
+    std::cout << num_variables_ - num_used_variables_ << std::endl;
 
-    cout << "clauses (all/long/binary/unit): ";
-    cout << num_clauses() << "/" << num_long_clauses_;
-    cout << "/" << num_binary_clauses_ << "/" << num_unit_clauses_ << endl;
+    std::cout << "clauses (all/long/binary/unit): ";
+    std::cout << num_clauses() << "/" << num_long_clauses_;
+    std::cout << "/" << num_binary_clauses_ << "/" << num_unit_clauses_ << std::endl;
   }
   unsigned getTime() {
     return num_decisions_;
@@ -237,6 +236,6 @@ public:
     if(num_cache_hits_ == 0) return 0.0;
     return sum_cache_hit_sizes_ / (long double) num_cache_hits_;
   }
-};
-
+}; // DataAndStatistics
+} // sharpSAT namespace
 #endif /* STATISTICS_H_ */

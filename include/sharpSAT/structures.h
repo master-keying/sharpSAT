@@ -5,22 +5,22 @@
  *      Author: Marc Thurley
  */
 
-#ifndef STRUCTURES_H_
-#define STRUCTURES_H_
+#ifndef SHARP_SAT_STRUCTURES_H_
+#define SHARP_SAT_STRUCTURES_H_
 
 #include <sharpSAT/primitive_types.h>
 #include <vector>
 #include <iostream>
-using namespace std;
 
+namespace sharpSAT {
 
+static const int INVALID_DL = -1;
 
-#define INVALID_DL -1
-
-typedef unsigned char TriValue;
-#define   F_TRI  0
-#define   T_TRI  1
-#define   X_TRI  2
+enum class TriValue : unsigned char {
+  F_TRI = 0,
+  T_TRI = 1,
+  X_TRI = 2
+};
 
 class LiteralID {
 public:
@@ -67,7 +67,7 @@ public:
   }
 
   void print() const {
-    cout << (sign() ? " " : "-") << var() << " ";
+    std::cout << (sign() ? " " : "-") << var() << " ";
   }
 
   unsigned raw() const { return value_;}
@@ -79,12 +79,12 @@ private:
 };
 
 static const LiteralID NOT_A_LIT(0, false);
-#define SENTINEL_LIT NOT_A_LIT
+static const auto SENTINEL_LIT = NOT_A_LIT;
 
 class Literal {
 public:
-  vector<LiteralID> binary_links_ = vector<LiteralID>(1,SENTINEL_LIT);
-  vector<ClauseOfs> watch_list_ = vector<ClauseOfs>(1,SENTINEL_CL);
+  std::vector<LiteralID> binary_links_ = std::vector<LiteralID>(1,SENTINEL_LIT);
+  std::vector<ClauseOfs> watch_list_ = std::vector<ClauseOfs>(1,SENTINEL_CL);
   float activity_score_ = 0.0f;
 
   void increaseActivity(unsigned u = 1){
@@ -133,7 +133,7 @@ public:
   bool hasBinaryLinks() {
     return !binary_links_.empty();
   }
-};
+}; // Literal
 
 class Antecedent {
   unsigned int val_;
@@ -167,7 +167,7 @@ public:
   bool isAnt() {
     return val_ != 1; //i.e. NOT a NOT_A_CLAUSE;
   }
-};
+}; // Antecedent
 
 
 struct Variable {
@@ -203,6 +203,6 @@ public:
     creation_time_ = time;
   }
   static unsigned overheadInLits(){return sizeof(ClauseHeader)/sizeof(LiteralID);}
-};
-
+}; // ClauseHeader
+} // sharpSAT namespace
 #endif /* STRUCTURES_H_ */
