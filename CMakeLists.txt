@@ -16,6 +16,7 @@ add_library(libsharpSAT STATIC
 	src/new_component_analyzer.cpp
 	src/solver.cpp
 	src/statistics.cpp
+	src/stopwatch.cpp
 	src/component_types/base_packed_component.cpp
 	src/component_types/component_archetype.cpp
 )
