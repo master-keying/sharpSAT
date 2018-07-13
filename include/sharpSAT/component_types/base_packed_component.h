@@ -24,8 +24,8 @@ template <class T>
   }
 
   void stuff(const unsigned val, const unsigned num_bits_val){
-      assert(num_bits_val > 0);
-      assert((val >> num_bits_val) == 0);
+      //assert(num_bits_val > 0);
+      //assert((val >> num_bits_val) == 0);
       if(end_of_bits_ == 0)
         *p = 0;
       assert((*p >> end_of_bits_) == 0);

@@ -121,7 +121,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
 
   data_ = new unsigned[data_size];
 
-  assert((data_size >> bits_of_data_size()) == 0);
+//  assert((data_size >> bits_of_data_size()) == 0);
   BitStuffer<unsigned> bs(data_);
 
   bs.stuff(data_size, bits_of_data_size());
