@@ -3,8 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <sys/time.h>
-#include <sys/resource.h>
 
 using namespace std;
 using namespace sharpSAT;

@@ -1,0 +1,48 @@
+## Build only, no tests are present ATM
+version: "{build}"
+
+branches:
+  except:
+    - /dev-travis.+/
+
+os:
+  - Visual Studio 2017
+
+init:
+  - git config --global core.autocrlf input
+
+install:
+  - vcpkg install mpir:%PLATFORM%-windows
+
+cache:
+  - c:\tools\vcpkg\installed
+
+# Win32 and x64 are CMake-compatible solution platform names.
+# This allows us to pass %PLATFORM% to CMake -A.
+platform:
+  - x64
+
+# build Configurations, i.e. Debug, Release, etc.
+configuration:
+  - Debug
+  - Release
+
+#Cmake will autodetect the compiler, but we set the arch
+before_build:
+  - cmake -H. -BBuild -A%PLATFORM% -DCMAKE_TOOLCHAIN_FILE=c:/tools/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+
+# build with MSBuild
+build:
+  project: Build\sharpSAT.sln           # path to Visual Studio solution or project
+  parallel: true                        # enable MSBuild parallel builds
+  verbosity: normal                     # MSBuild verbosity level {quiet|minimal|normal|detailed}
+
+test_script:
+  - set CTEST_OUTPUT_ON_FAILURE=1
+  - cd Build
+  - echo %CONFIGURATION%
+  - if "%CONFIGURATION%"=="Release" ( ctest -j 2 -C %CONFIGURATION% )
+
+environment:
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
