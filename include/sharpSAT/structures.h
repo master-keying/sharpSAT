@@ -9,9 +9,10 @@
 #define SHARP_SAT_STRUCTURES_H_
 
 #include <sharpSAT/primitive_types.h>
+
+#include <cstdlib>
 #include <vector>
 #include <cassert>
-#include <iostream>
 
 namespace sharpSAT {
 
@@ -30,7 +31,7 @@ public:
     value_ = 0;
   }
   LiteralID(int lit) {
-    value_ = (abs(lit) << 1) + (unsigned) (lit > 0);
+    value_ = (std::abs(lit) << 1) + (unsigned) (lit > 0);
   }
 
   LiteralID(VariableIndex var, bool sign) {
@@ -67,9 +68,7 @@ public:
     return LiteralID(var(), !sign());
   }
 
-  void print() const {
-    std::cout << (sign() ? " " : "-") << var() << " ";
-  }
+  void print() const;
 
   unsigned raw() const { return value_;}
 

@@ -5,8 +5,9 @@
  *      Author: marc
  */
 #include <sharpSAT/solver.h>
-#include <deque>
 #include <algorithm>
+#include <deque>
+#include <iostream>
 #include <tuple>
 
 using namespace std;

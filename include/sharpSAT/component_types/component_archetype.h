@@ -19,9 +19,6 @@
 #include <algorithm>
 
 
-
-#include <iostream>
-
 namespace sharpSAT {
 
 namespace {

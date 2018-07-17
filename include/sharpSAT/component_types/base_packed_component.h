@@ -10,7 +10,6 @@
 
 #include <assert.h>
 #include <gmpxx.h>
-#include <iostream>
 
 namespace sharpSAT {
 
@@ -88,13 +87,7 @@ public:
     if (data_)
       delete[] data_;
   }
-  static void outbit(unsigned v){
-   for(auto i=0; i<32;i++){
-      std::cout << ((v&2147483648)?"1":"0");
-      v&=2147483648-1;
-      v <<= 1;
-    }
-  }
+  static void outbit(unsigned v);
 
 
   static unsigned log2(unsigned v){

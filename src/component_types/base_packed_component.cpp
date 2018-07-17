@@ -36,4 +36,13 @@ void BasePackedComponent::adjustPackSize(unsigned int maxVarId,
     _data_size_mask = (_data_size_mask << 1) + 1;
 }
 
+void BasePackedComponent::outbit(unsigned v){
+    for(auto i = 0; i < 32; ++i) {
+        std::cout << ((v&2147483648)? "1" : "0");
+        v &= 2147483648-1;
+        v <<= 1;
+    }
+}
+
+
 } // sharpSAT namespace
