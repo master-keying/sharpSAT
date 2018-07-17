@@ -290,11 +290,11 @@ ClauseIndex Instance::addClause(std::vector<LiteralID> &literals) {
   // register for clause updates
   literal(literals[0]).addWatchLinkTo(cl_ofs);
   literal(literals[1]).addWatchLinkTo(cl_ofs);
-  
-  // Simulate the constructor (!!!) of the ClauseHeader.
-  // Note that the \ref ClauseHeader::length_ is not initialized.
-  // Note that it does not matter, since the field is never read. :-)
+
+  // Initialize the ClauseHeader
+  new(&getHeaderOf(cl_ofs)) ClauseHeader();
   getHeaderOf(cl_ofs).set_creation_time(statistics_.num_conflicts_);
+  // TODO destroy ClauseHeader when destroying this
   return cl_ofs;
 }
 

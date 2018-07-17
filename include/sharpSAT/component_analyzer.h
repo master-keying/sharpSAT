@@ -29,8 +29,8 @@ struct CAClauseHeader {
   LiteralID lit_A;
   LiteralID lit_B;
 
-  static unsigned overheadInLits() {
-    return (sizeof(CAClauseHeader) - 2 * sizeof(LiteralID)) / sizeof(LiteralID);
+  constexpr static unsigned overheadInLits() {
+    return overhead::calculate_and_validate<ClauseHeader,LiteralID>();
   }
 };
 

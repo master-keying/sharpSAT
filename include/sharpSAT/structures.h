@@ -234,6 +234,28 @@ struct Variable {
   int decision_level = INVALID_DL;
 };
 
+namespace overhead {
+
+  //! Number of entries in `std::vector<U>` to fit a `T`.
+  template<class T, class U>
+  constexpr unsigned calculate() noexcept {
+    return (sizeof(T) + sizeof(U) - 1) / sizeof(U);
+  }
+
+  /*!
+   * Number of entries in `std::vector<U>` to fit a `T`.
+   * 
+   * This version checks soundness.
+   */
+  template<
+    class T, class U,
+    class = typename std::enable_if< (calculate<T,U>() != 0)
+      && (calculate<T,U>() * sizeof(U) >= sizeof(T)) >::type>
+  constexpr unsigned calculate_and_validate() noexcept {
+    return calculate<T,U>();
+  }
+}; // overhead
+
 /*!
  * Statistics about a clause.
  *
@@ -243,9 +265,6 @@ struct Variable {
  * _Warning:_ Due to initialization in \ref Instance::addClause,
  * the constructor is never called. All memory occupied by
  * objects of this will be **zero-initialized**!
- * 
- * _Warning:_ Due to initialization in \ref Instance::addClause,
- * `sizeof(ClauseHeader)` and `sizeof(LiteralID)` must be divisible!
  */
 class ClauseHeader {
   unsigned creation_time_; // number of conflicts seen at creation time
@@ -274,7 +293,7 @@ public:
   }
 
   constexpr static unsigned overheadInLits() {
-    return sizeof(ClauseHeader) / sizeof(LiteralID);
+    return overhead::calculate_and_validate<ClauseHeader,LiteralID>();
   }
 }; // ClauseHeader
 } // sharpSAT namespace
