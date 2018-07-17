@@ -98,6 +98,9 @@ foreach(AUTORUN_TEST ${SHARPSAT_AUTORUN_TESTS})
     set_tests_properties("${AUTORUN_TEST}" PROPERTIES
         PASS_REGULAR_EXPRESSION "^${EXPECTED_MODEL_COUNT}$"
     ) # Set the expected output
+    set_tests_properties("${AUTORUN_TEST}" PROPERTIES
+        TIMEOUT 30
+    ) # 30s timeout
 endforeach(AUTORUN_TEST)
 
 
