@@ -86,7 +86,7 @@ public:
 
   ~BasePackedComponent() {
     if (data_)
-      delete data_;
+      delete[] data_;
   }
   static void outbit(unsigned v){
    for(auto i=0; i<32;i++){
@@ -172,7 +172,7 @@ public:
     // we should make sure that this component is not present in the component stack anymore!
     assert(isDeletable());
     if (data_)
-      delete data_;
+      delete[] data_;
     data_ = nullptr;
   }
 
