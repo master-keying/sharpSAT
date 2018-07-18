@@ -83,18 +83,29 @@ set_target_properties(libsharpSAT sharpSAT
 ##
 enable_testing()
 
-# Read all easy instances from a file
+# Read "integration" tests
+file(GLOB SHARPSAT_INTEGRATION_TESTS
+     LIST_DIRECTORIES false
+     RELATIVE "${PROJECT_SOURCE_DIR}/test"
+     "${PROJECT_SOURCE_DIR}/test/integration/*.cnf")
+
+# Read all "easy benchmark" instances from a file
 file(READ "${PROJECT_SOURCE_DIR}/test/benchmark/easy.txt" SHARPSAT_AUTORUN_TESTS)
 string(REGEX REPLACE ";" "\\\\;" SHARPSAT_AUTORUN_TESTS "${SHARPSAT_AUTORUN_TESTS}")
 string(REGEX REPLACE "\n" ";" SHARPSAT_AUTORUN_TESTS "${SHARPSAT_AUTORUN_TESTS}")
+string(REGEX REPLACE "([^;]*);" "benchmark/\\1;" SHARPSAT_AUTORUN_TESTS "${SHARPSAT_AUTORUN_TESTS}")
 
 # Add 1 test for each easy instance
-foreach(AUTORUN_TEST ${SHARPSAT_AUTORUN_TESTS})
+foreach(AUTORUN_TEST ${SHARPSAT_INTEGRATION_TESTS} ${SHARPSAT_AUTORUN_TESTS})
+    
+    # Globbed test names have ".cnf" suffix. Remove it.
+    string(REGEX REPLACE "\\.cnf$" "" AUTORUN_TEST "${AUTORUN_TEST}")
+
     add_test(NAME "${AUTORUN_TEST}"
-        COMMAND sharpSAT "test/benchmark/${AUTORUN_TEST}.cnf"
+        COMMAND sharpSAT "test/${AUTORUN_TEST}.cnf"
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     ) # Initialize the test
-    file(READ "test/benchmark/${AUTORUN_TEST}.txt" EXPECTED_MODEL_COUNT)
+    file(READ "test/${AUTORUN_TEST}.txt" EXPECTED_MODEL_COUNT)
     set_tests_properties("${AUTORUN_TEST}" PROPERTIES
         PASS_REGULAR_EXPRESSION "^${EXPECTED_MODEL_COUNT}$"
     ) # Set the expected output
