@@ -158,7 +158,7 @@ public:
   }
   int get_decision_level() const {
     assert(size() > 0);
-    return size() - 1 + failed_literal_test_active;
+    return static_cast<int>(size()) - 1 + failed_literal_test_active;
   } // 0 means pre-1st-decision
 }; // DecisionStack
 } // sharpSAT namespace

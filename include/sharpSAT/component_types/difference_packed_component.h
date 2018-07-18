@@ -111,8 +111,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
     data_size_clauses += bits_per_clause() + 5
        + (rComp.numLongClauses() - 1) * bits_per_clause_diff;
 
-  unsigned data_size = (data_size_vars + data_size_clauses)/bits_per_block();
-    data_size+=  ((data_size_vars + data_size_clauses) % bits_per_block())? 1 : 0;
+  unsigned data_size = (data_size_vars + data_size_clauses + bits_per_block() - 1) / bits_per_block();
 
   data_ = new unsigned[data_size];
 

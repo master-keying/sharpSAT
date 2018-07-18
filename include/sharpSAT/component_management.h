@@ -76,7 +76,7 @@ public:
 
   inline void recordRemainingCompsFor(StackLevel &top);
 
-  inline void sortComponentStackRange(unsigned start, unsigned end);
+  inline void sortComponentStackRange(size_t start, size_t end);
 
   void gatherStatistics(){
 //     statistics_.cache_bytes_memory_usage_ =
@@ -96,11 +96,11 @@ private:
 };
 
 
-void ComponentManager::sortComponentStackRange(unsigned start, unsigned end){
+void ComponentManager::sortComponentStackRange(size_t start, size_t end){
     assert(start <= end);
     // sort the remaining components for processing
-    for (unsigned i = start; i < end; i++)
-      for (unsigned j = i + 1; j < end; j++) {
+    for (size_t i = start; i < end; i++)
+      for (size_t j = i + 1; j < end; j++) {
         if (component_stack_[i]->num_variables()
             < component_stack_[j]->num_variables())
           std::swap(component_stack_[i], component_stack_[j]);
@@ -123,7 +123,7 @@ bool ComponentManager::findNextRemainingComponentOf(StackLevel &top) {
 
 void ComponentManager::recordRemainingCompsFor(StackLevel &top) {
    Component & super_comp = superComponentOf(top);
-   unsigned new_comps_start_ofs = component_stack_.size();
+   size_t new_comps_start_ofs = component_stack_.size();
 
    ana_.setupAnalysisContext(top, super_comp);
 

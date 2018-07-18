@@ -18,7 +18,7 @@ namespace sharpSAT {
 
 class Instance {
 public:
-  
+
   /**
    * Make this instance empty.
    *
@@ -103,11 +103,11 @@ protected:
   /////////////////////////////////////////////////////////
 
 
-  unsigned int num_conflict_clauses() const {
+  size_t num_conflict_clauses() const {
     return conflict_clauses_.size();
   }
 
-  unsigned int num_variables() {
+  size_t num_variables() {
     return variables_.size() - 1;
   }
 
@@ -115,13 +115,13 @@ protected:
 
   DataAndStatistics statistics_;
 
-  /** 
+  /**
    * All clauses are stored here.
-   * 
+   *
    * _Format:_
    * - First literal is \ref SENTINEL_LIT.
    * - Every clause begins with a \ref ClauseHeader structure
-   *   followed by the literals terminated by SENTINEL_LIT. 
+   *   followed by the literals terminated by SENTINEL_LIT.
    */
   std::vector<LiteralID> literal_pool_;
 
@@ -134,11 +134,11 @@ protected:
 
   /*!
    * Non-unit non-binary clauses, in which a literal appears.
-   * 
+   *
    * Outer index is the \ref LiteralID. Inner vectors are sorted initially
    * (order may change during \ref compactClauses() - to be verified).
    * Values are clause offset within \ref literal_pool_.
-   * 
+   *
    * _Note:_ Only the non-learnt clauses are stored here.
    */
   LiteralIndexedVector<std::vector<ClauseOfs>> occurrence_lists_;
@@ -256,7 +256,7 @@ protected:
 
 /*!
  * Internal method to add a new clause.
- * 
+ *
  * @returns ID of its first literal within \ref literal_pool_
  *          or 0 if the clause was neither unit, nor binary
  */
@@ -278,7 +278,7 @@ ClauseIndex Instance::addClause(std::vector<LiteralID> &literals) {
     literal_pool_.push_back(0);
 
   // where the literals will start
-  ClauseOfs cl_ofs = literal_pool_.size();  
+  ClauseOfs cl_ofs = literal_pool_.size();
   for (auto l : literals) {
     literal_pool_.push_back(l);
     literal(l).increaseActivity(1);
@@ -303,7 +303,7 @@ ClauseIndex Instance::addClause(std::vector<LiteralID> &literals) {
  *
  * _Note:_ For whatever reason, \ref occurrence_lists_ is not updated!
  * See \ref Instance::add_clause for an explanation.
- * 
+ *
  * @returns a non-Antecedent if the clause is a unit clause,
  * a Literal-Antecedent if the clause is binary or
  * a Clause-Antecedent if the clause has 3 or more literals
