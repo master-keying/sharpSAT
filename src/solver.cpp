@@ -138,7 +138,9 @@ void Solver::solve() {
 	} else {
 		statistics_.exit_state_ = SOLVER_StateT::SUCCESS;
 		statistics_.set_final_solution_count(0.0);
-		cout << endl << " FOUND UNSAT DURING PREPROCESSING " << endl;
+		if (config_.verbose) {
+			cout << endl << " FOUND UNSAT DURING PREPROCESSING " << endl;
+		}
 	}
 }
 
@@ -299,7 +301,7 @@ retStateT Solver::resolveConflict() {
 	assert(uip_clauses_.size() == 1);
 
 	// DEBUG
-	if (uip_clauses_.back().size() == 0)
+	if (uip_clauses_.back().size() == 0 && config_.verbose)
 		cout << " EMPTY CLAUSE FOUND" << endl;
 	// END DEBUG
 
@@ -549,7 +551,7 @@ bool Solver::implicitBCP() {
 					for (auto it = uip_clauses_.rbegin();
 							it != uip_clauses_.rend(); it++) {
 						// DEBUG
-						if (it->size() == 0)
+						if (it->size() == 0 && config_.verbose)
 							cout << "EMPTY CLAUSE FOUND" << endl;
 						// END DEBUG
 						setLiteralIfFree(it->front(),
