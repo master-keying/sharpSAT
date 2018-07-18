@@ -76,10 +76,10 @@ private:
 
   /*!
    * MiniSAT-like encoded literal.
-   * 
+   *
    * The LSB is the sign (false = 0, true = 1).
    * Remaining bits represent a variable.
-   */ 
+   */
   unsigned value_;
 
   template <class _T> friend class LiteralIndexedVector;
@@ -87,7 +87,7 @@ private:
 
 /*!
  * Not-a-literal is a special literal.
- * 
+ *
  * It's represented as value 0, hence its
  * variable is the \ref varsSENTINEL.
  */
@@ -96,27 +96,27 @@ static const auto SENTINEL_LIT = NOT_A_LIT;
 
 class Literal {
 public:
-  
+
   /*!
    * The "neighbour" literals in binary clauses.
-   * 
+   *
    * Invariant: `back()` is \ref SENTINEL_LIT
    */
   std::vector<LiteralID> binary_links_ = std::vector<LiteralID>(1,SENTINEL_LIT);
-  
+
   /*!
    * Subset of clauses, in which the literal appears.
-   * 
+   *
    * Values represent offsets within \ref Instance::literal_pool_.
-   * 
+   *
    * _Purpose:_ If a literal is set, the watched clauses will be updated.
    * If set to `true`, clauses are ignored in future search.
    * If set to `false`, the next literal watch for that clause.
-   * 
+   *
    * _Invariant:_ `front()` is \ref SENTINEL_CL
-   */ 
+   */
   std::vector<ClauseOfs> watch_list_ = std::vector<ClauseOfs>(1,SENTINEL_CL);
-  
+
   //! Initialized to literal's occurances among all clauses
   float activity_score_ = 0.0f;
 
@@ -174,16 +174,16 @@ class Antecedent {
 
   /*!
    * A flagged integer.
-   * 
+   *
    * If the LSB is 1, the value represents a \ref ClauseOfs.
    * If the represented clause is \ref NOT_A_CLAUSE,
    * then the value in this field is 1.
    * If `sizeof(unsigned int) = 4` (on 32-bit and 64-bit Linux),
    * this can represent at most ~2*10^9 variables.
-   * 
+   *
    * If the LSB is 0, the value represents a \ref LiteralID.
    * In that case the 2nd LSB is the sign.
-   * Remaining bits represent variable ID. 
+   * Remaining bits represent variable ID.
    * If `sizeof(unsigned int) = 4` (on 32-bit and 64-bit Linux),
    * this can represent at most ~10^9 variables.
    * Since \ref varsSENTINEL is 0, its `false` \ref LiteralID
@@ -192,7 +192,7 @@ class Antecedent {
   unsigned int val_;
 
 public:
-  
+
   //! Antecendant represents \ref NOT_A_CLAUSE
   Antecedent() {
     val_ = 1;
@@ -233,34 +233,12 @@ struct Variable {
   int decision_level = INVALID_DL;
 };
 
-namespace overhead {
-
-  //! Number of entries in `std::vector<U>` to fit a `T`.
-  template<class T, class U>
-  constexpr unsigned calculate() noexcept {
-    return (sizeof(T) + sizeof(U) - 1) / sizeof(U);
-  }
-
-  /*!
-   * Number of entries in `std::vector<U>` to fit a `T`.
-   * 
-   * This version checks soundness.
-   */
-  template<
-    class T, class U,
-    class = typename std::enable_if< (calculate<T,U>() != 0)
-      && (calculate<T,U>() * sizeof(U) >= sizeof(T)) >::type>
-  constexpr unsigned calculate_and_validate() noexcept {
-    return calculate<T,U>();
-  }
-}; // overhead
-
 /*!
  * Statistics about a clause.
  *
  * For now Clause Header is just a dummy
  * we keep it for possible later changes.
- * 
+ *
  * _Warning:_ Due to initialization in \ref Instance::addClause,
  * the constructor is never called. All memory occupied by
  * objects of this will be **zero-initialized**!
@@ -292,7 +270,7 @@ public:
   }
 
   constexpr static unsigned overheadInLits() {
-    return overhead::calculate_and_validate<ClauseHeader,LiteralID>();
+    return sizeof(ClauseHeader) / sizeof(LiteralID);
   }
 }; // ClauseHeader
 } // sharpSAT namespace

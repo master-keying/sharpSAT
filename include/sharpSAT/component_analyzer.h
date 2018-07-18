@@ -30,7 +30,7 @@ struct CAClauseHeader {
   LiteralID lit_B;
 
   constexpr static unsigned overheadInLits() {
-    return overhead::calculate_and_validate<ClauseHeader,LiteralID>();
+    return (sizeof(CAClauseHeader) - 2 * sizeof(LiteralID)) / sizeof(LiteralID);
   }
 };
 
