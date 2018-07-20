@@ -602,7 +602,7 @@ bool Solver::implicitBCP() {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 void Solver::minimizeAndStoreUIPClause(LiteralID uipLit,
-		vector<LiteralID> & tmp_clause, bool seen[]) {
+		vector<LiteralID> & tmp_clause, std::vector<bool> const& seen) {
 	static deque<LiteralID> clause;
 	clause.clear();
 	assertion_level_ = 0;
@@ -648,8 +648,11 @@ void Solver::recordLastUIPCauses() {
 // variables of lower dl: if seen we dont work with them anymore
 // variables of this dl: if seen we incorporate their
 // antecedent and set to unseen
-	bool seen[num_variables() + 1];
-	memset(seen, false, sizeof(bool) * (num_variables() + 1));
+
+    // ToDo:: This can cause some slowdown because of allocations.
+    //        If this proves problematic, we can cache the allocation,
+    //        as the number of variables should remain constant after init
+    std::vector<bool> seen(num_variables() + 1);
 
 	static vector<LiteralID> tmp_clause;
 	tmp_clause.clear();
@@ -742,8 +745,10 @@ void Solver::recordAllUIPCauses() {
 // variables of lower dl: if seen we dont work with them anymore
 // variables of this dl: if seen we incorporate their
 // antecedent and set to unseen
-	bool seen[num_variables() + 1];
-	memset(seen, false, sizeof(bool) * (num_variables() + 1));
+    // ToDo:: This can cause some slowdown because of allocations.
+    //        If this proves problematic, we can cache the allocation,
+    //        as the number of variables should remain constant after init
+    std::vector<bool> seen(num_variables() + 1);
 
 	static vector<LiteralID> tmp_clause;
 	tmp_clause.clear();

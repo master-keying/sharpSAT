@@ -33,7 +33,7 @@ public:
 	 * The instance must be loaded via the \ref Instance public API
 	 * (\ref Instance::initialize, \ref Instance::add_clause and
 	 * \ref Instance::finalize).
-	 * 
+	 *
 	 * Time-limit in seconds can be set by `setTimeBound()`.
 	 *
 	 * Calculation result can be found in `statistics().exit_state_`
@@ -232,7 +232,7 @@ private:
 	void recordAllUIPCauses();
 
 	void minimizeAndStoreUIPClause(LiteralID uipLit,
-			std::vector<LiteralID> & tmp_clause, bool seen[]);
+			std::vector<LiteralID> & tmp_clause, std::vector<bool> const& seen);
 	void storeUIPClause(LiteralID uipLit, std::vector<LiteralID> & tmp_clause);
 	int getAssertionLevel() const {
 		return assertion_level_;

@@ -1,10 +1,6 @@
 cmake_minimum_required (VERSION 3.5)
 project (sharpSAT VERSION 1.2 LANGUAGES CXX)
 
-if (WIN32)
-    message(FATAL_ERROR "Windows is not supported at this moment")
-endif()
-
 include(GNUInstallDirs)
 
 add_library(libsharpSAT STATIC
@@ -71,22 +67,37 @@ target_include_directories(libsharpSAT
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-
-find_library(GMP_LIB gmp)
-find_library(GMPXX_LIB gmpxx)
+if (NOT WIN32)
+    find_library(GMP_LIB gmp)
+    find_library(GMPXX_LIB gmpxx)
+endif()
 
 target_link_libraries(libsharpSAT PUBLIC ${GMP_LIB} ${GMPXX_LIB})
 
+
+# On Windows we use MPIR via vcpkg and it is not integrated with
+# CMake at all. Thus we have to hack something together for now.
+if (WIN32)
+    target_include_directories(libsharpSAT PUBLIC "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/include/")
+    target_link_libraries(libsharpSAT PUBLIC "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/mpir.lib")
+endif()
+# The current code is a mess and abuses MSVC iterators in an invalid way
+if (MSVC)
+    target_compile_definitions(libsharpSAT PUBLIC _ITERATOR_DEBUG_LEVEL=0)
+endif()
+
 add_executable(sharpSAT src/main.cpp)
 target_link_libraries(sharpSAT libsharpSAT)
+
+
 
 if ( CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|GNU" )
     target_compile_options( libsharpSAT PRIVATE -Wall -Wextra )
     target_compile_options( sharpSAT PRIVATE -Wall -Wextra )
 endif()
 if ( CMAKE_CXX_COMPILER_ID MATCHES "MSVC" )
-    target_compile_options( libsharpSAT PRIVATE /W4 )
-    target_compile_options( sharpSAT PRIVATE /W4 )
+    target_compile_options( libsharpSAT PRIVATE /W4 /wd4127 /wd4244 )
+    target_compile_options( sharpSAT PRIVATE /W4 /wd4127 /wd4244 )
 endif()
 
 # Keep build optimized -- Only for GCC/Clang, MSVC does Debug/Release differently
