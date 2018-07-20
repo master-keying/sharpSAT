@@ -19,7 +19,7 @@ void ComponentManager::initialize(LiteralIndexedVector<Literal> & literals,
   CacheableComponent::adjustPackSize(ana_.max_variable_id(), ana_.max_clause_id());
 
   component_stack_.clear();
-  component_stack_.reserve(ana_.max_variable_id() + 2);
+  component_stack_.reserve(static_cast<unsigned>(ana_.max_variable_id()) + 2);
   component_stack_.push_back(new Component());
   component_stack_.push_back(new Component());
   assert(component_stack_.size() == 2);

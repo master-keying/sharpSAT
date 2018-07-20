@@ -9,7 +9,7 @@ static_assert((sizeof(ClauseHeader) / sizeof(LiteralID)) * sizeof(LiteralID) == 
 
 
 void LiteralID::print() const {
-  std::cout << (sign() ? " " : "-") << var() << " ";
+  std::cout << (sign() ? " " : "-") << static_cast<unsigned>(var()) << " ";
 }
 
 } // end namespace sharpSAT

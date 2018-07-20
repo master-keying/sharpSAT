@@ -35,11 +35,11 @@ public:
     // the only time a varsSENTINEL is added should be in a
     // call to closeVariableData(..)
     assert(var != varsSENTINEL);
-    data_.push_back(var);
+    data_.push_back(static_cast<unsigned>(var));
   }
 
   void closeVariableData() {
-    data_.push_back(varsSENTINEL);
+    data_.push_back(static_cast<unsigned>(varsSENTINEL));
     clauses_ofs_ = data_.size();
   }
 
@@ -47,19 +47,19 @@ public:
     // the only time a clsSENTINEL is added should be in a
     // call to closeClauseData(..)
     assert(cl != clsSENTINEL);
-    data_.push_back(cl);
+    data_.push_back(static_cast<unsigned>(cl));
   }
 
   void closeClauseData() {
-    data_.push_back(clsSENTINEL);
+    data_.push_back(static_cast<unsigned>(clsSENTINEL));
     assert(*(clsBegin()-1) == 0);
   }
 
-  std::vector<VariableIndex>::const_iterator varsBegin() const {
+  std::vector<unsigned>::const_iterator varsBegin() const {
     return data_.begin();
   }
 
-  std::vector<ClauseIndex>::const_iterator clsBegin() const {
+  std::vector<unsigned>::const_iterator clsBegin() const {
     return data_.begin() + clauses_ofs_;
   }
 
@@ -75,14 +75,14 @@ public:
     return data_.empty();
   }
 
-  void createAsDummyComponent(unsigned max_var_id, unsigned max_clause_id) {
+  void createAsDummyComponent(VariableIndex max_var_id, ClauseIndex max_clause_id) {
     data_.clear();
     clauses_ofs_ = 1;
-    for (unsigned idvar = 1; idvar <= max_var_id; idvar++)
+    for (VariableIndex idvar(1); idvar <= max_var_id; idvar++)
       addVar(idvar);
     closeVariableData();
-    if (max_clause_id > 0)
-      for (unsigned idcl = 1; idcl <= max_clause_id; idcl++)
+    if (max_clause_id != clsSENTINEL)
+      for (ClauseIndex idcl(1); idcl <= max_clause_id; idcl++)
         addCl(idcl);
     closeClauseData();
   }

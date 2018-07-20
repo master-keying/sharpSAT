@@ -26,7 +26,7 @@
 namespace sharpSAT {
 
 struct CAClauseHeader {
-  unsigned clause_id = 0;
+  ClauseIndex clause_id = ClauseIndex(0);
   LiteralID lit_A;
   LiteralID lit_B;
 
@@ -71,14 +71,14 @@ public:
   void setupAnalysisContext(StackLevel &top, Component & super_comp){
      archetype_.reInitialize(top,super_comp);
 
-     for (auto vt = super_comp.varsBegin(); *vt != varsSENTINEL; vt++)
-       if (isActive(*vt)) {
-         archetype_.setVar_in_sup_comp_unseen(*vt);
-         var_frequency_scores_[*vt] = 0;
+     for (auto vt = super_comp.varsBegin(); VariableIndex(*vt) != varsSENTINEL; vt++)
+       if (isActive(VariableIndex(*vt))) {
+         archetype_.setVar_in_sup_comp_unseen(VariableIndex(*vt));
+         var_frequency_scores_[VariableIndex(*vt)] = 0;
        }
 
-     for (auto itCl = super_comp.clsBegin(); *itCl != clsSENTINEL; itCl++)
-         archetype_.setClause_in_sup_comp_unseen(*itCl);
+     for (auto itCl = super_comp.clsBegin(); ClauseIndex(*itCl) != clsSENTINEL; itCl++)
+         archetype_.setClause_in_sup_comp_unseen(ClauseIndex(*itCl));
   }
 
   // returns true, iff the component found is non-trivial
@@ -99,10 +99,11 @@ public:
     return archetype_.makeComponentFromState(search_stack_.size());
   }
 
-  unsigned max_clause_id(){
+  ClauseIndex max_clause_id(){
      return max_clause_id_;
   }
-  unsigned max_variable_id(){
+
+  VariableIndex max_variable_id(){
     return max_variable_id_;
   }
 
@@ -112,9 +113,9 @@ public:
 
   //begin DEBUG
   void test_checkArchetypeRepForClause(unsigned *pcl_ofs){
-      ClauseIndex clID = getClauseID(*pcl_ofs);
+      ClauseIndex clID = getClauseID(ClauseOfs(*pcl_ofs));
       bool all_a = true;
-      for (auto itL = beginOfClause(*pcl_ofs); *itL != SENTINEL_LIT; itL++) {
+      for (auto itL = beginOfClause(ClauseOfs(*pcl_ofs)); *itL != SENTINEL_LIT; itL++) {
         if(!isActive(*itL))
           all_a = false;
       }
@@ -126,8 +127,8 @@ private:
   // the id of the last clause
   // note that clause ID is the clause number,
   // different from the offset of the clause in the literal pool
-  unsigned max_clause_id_ = 0;
-  unsigned max_variable_id_ = 0;
+  ClauseIndex max_clause_id_ = ClauseIndex(0);
+  VariableIndex max_variable_id_ = VariableIndex(0);
 
   // pool of clauses as lists of LiteralIDs
   // Note that with a clause begin position p we have
@@ -146,11 +147,11 @@ private:
   // in one contiguous chunk of memory
   std::vector<unsigned> unified_variable_links_lists_pool_;
 
-  std::vector<unsigned> map_clause_id_to_ofs_;
-  std::vector<unsigned> variable_link_list_offsets_;
+  std::vector<ClauseOfs> map_clause_id_to_ofs_;
+  VariableIndexedVector<unsigned> variable_link_list_offsets_;
   LiteralIndexedVector<TriValue> & literal_values_;
 
-  std::vector<unsigned> var_frequency_scores_;
+  VariableIndexedVector<unsigned> var_frequency_scores_;
 
   ComponentArchetype  archetype_;
 
@@ -175,14 +176,18 @@ private:
     return literal_values_[LiteralID(v, true)] == TriValue::X_TRI;
   }
 
-  unsigned getClauseID(ClauseOfs cl_ofs) {
-    return reinterpret_cast<CAClauseHeader *>(&literal_pool_[cl_ofs
-        - CAClauseHeader::overheadInLits()])->clause_id;
+  ClauseIndex getClauseID(ClauseOfs cl_ofs) {
+    return ClauseIndex(
+      reinterpret_cast<CAClauseHeader *>(
+        &literal_pool_[static_cast<unsigned>(cl_ofs)
+          - CAClauseHeader::overheadInLits() ]
+      )->clause_id
+    );
   }
 
   CAClauseHeader &getHeaderOf(ClauseOfs cl_ofs) {
-    return *reinterpret_cast<CAClauseHeader *>(&literal_pool_[cl_ofs
-        - CAClauseHeader::overheadInLits()]);
+    return *reinterpret_cast<CAClauseHeader *>(&literal_pool_[
+      static_cast<unsigned>(cl_ofs) - CAClauseHeader::overheadInLits()]);
   }
 
   unsigned *beginOfLinkList(VariableIndex v) {
@@ -190,7 +195,7 @@ private:
   }
 
   std::vector<LiteralID>::iterator beginOfClause(ClauseOfs cl_ofs) {
-    return literal_pool_.begin() + cl_ofs;
+    return literal_pool_.begin() + static_cast<unsigned>(cl_ofs);
   }
 
   // stores all information about the component of var

@@ -30,16 +30,17 @@ public:
   LiteralID() {
     value_ = 0;
   }
-  LiteralID(int lit) {
+
+  explicit LiteralID(int lit) {
     value_ = (std::abs(lit) << 1) + (unsigned) (lit > 0);
   }
 
-  LiteralID(VariableIndex var, bool sign) {
-    value_ = (var << 1) + (unsigned) sign;
+  explicit LiteralID(VariableIndex var, bool sign) {
+    value_ = (static_cast<unsigned>(var) << 1) + (unsigned) sign;
   }
 
   VariableIndex var() const {
-    return (value_ >> 1);
+    return VariableIndex(value_ >> 1);
   }
 
   int toInt() const {
@@ -91,7 +92,7 @@ private:
  * It's represented as value 0, hence its
  * variable is the \ref varsSENTINEL.
  */
-static const LiteralID NOT_A_LIT(0, false);
+static const LiteralID NOT_A_LIT(VariableIndex(0), false);
 static const auto SENTINEL_LIT = NOT_A_LIT;
 
 class Literal {
@@ -200,7 +201,7 @@ public:
 
   //! Antecendant represents a clause
   Antecedent(const ClauseOfs cl_ofs) {
-     val_ = (cl_ofs << 1) | 1;
+     val_ = (static_cast<unsigned>(cl_ofs) << 1) | 1;
    }
 
   //! Antecendant represents a literal
@@ -213,7 +214,7 @@ public:
   }
 
   ClauseOfs asCl() const {
-      return val_ >> 1;
+      return ClauseOfs(val_ >> 1);
     }
 
   LiteralID asLit() {

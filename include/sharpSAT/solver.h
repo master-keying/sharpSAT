@@ -86,9 +86,9 @@ private:
 
 
 	 void decayActivitiesOf(Component & comp) {
-	   for (auto it = comp.varsBegin(); *it != varsSENTINEL; it++) {
-	          literal(LiteralID(*it,true)).activity_score_ *=0.5;
-	          literal(LiteralID(*it,false)).activity_score_ *=0.5;
+	   for (auto it = comp.varsBegin(); VariableIndex(*it) != varsSENTINEL; it++) {
+	          literal(LiteralID(VariableIndex(*it),true)).activity_score_ *=0.5;
+	          literal(LiteralID(VariableIndex(*it),false)).activity_score_ *=0.5;
 	       }
 	}
 	///  this method performs Failed literal tests online
@@ -232,7 +232,8 @@ private:
 	void recordAllUIPCauses();
 
 	void minimizeAndStoreUIPClause(LiteralID uipLit,
-			std::vector<LiteralID> & tmp_clause, std::vector<bool> const& seen);
+			std::vector<LiteralID> & tmp_clause,
+			const VariableIndexedVector<bool>& seen);
 	void storeUIPClause(LiteralID uipLit, std::vector<LiteralID> & tmp_clause);
 	int getAssertionLevel() const {
 		return assertion_level_;

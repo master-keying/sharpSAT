@@ -47,7 +47,7 @@ public:
 	}
 
 	LiteralID end_lit() {
-		return LiteralID(size() / 2, false);
+		return LiteralID(VariableIndex(size() / 2), false);
 	}
 
 	using std::vector<_T>::end;
@@ -55,5 +55,35 @@ public:
 	using std::vector<_T>::clear;
 	using std::vector<_T>::push_back;
 }; // LiteralIndexedVector
+
+
+
+//! Vector indexed by \ref VariableIndex
+template<class T>
+struct VariableIndexedVector : public std::vector<T> {
+
+  VariableIndexedVector()
+  : std::vector<T>()
+  {}
+
+  VariableIndexedVector(size_t n)
+  : std::vector<T>(n)
+  {}
+
+  VariableIndexedVector(size_t n, const T& value)
+  : std::vector<T>(n, value)
+  {}
+
+  typename std::vector<T>::const_reference operator [](const VariableIndex& var) const {
+    return std::vector<T>::operator[](static_cast<unsigned>(var));
+  }
+
+  typename std::vector<T>::reference operator [](const VariableIndex& var) {
+    return std::vector<T>::operator[](static_cast<unsigned>(var));
+  }
+}; // var_vactor<T>
+
+
+
 } // sharpSAT namespace
 #endif /* CONTAINERS_H_ */

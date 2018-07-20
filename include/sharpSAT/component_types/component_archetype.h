@@ -87,88 +87,91 @@ public:
   }
 
   void setVar_in_sup_comp_unseen(VariableIndex v) {
-    seen_[v] = CA_SearchState::VAR_IN_SUP_COMP_UNSEEN | (seen_[v] & CA_SearchState::CL_MASK);
+    seen(v) = CA_SearchState::VAR_IN_SUP_COMP_UNSEEN | (seen(v) & CA_SearchState::CL_MASK);
   }
 
   void setClause_in_sup_comp_unseen(ClauseIndex cl) {
-    seen_[cl] = CA_SearchState::CL_IN_SUP_COMP_UNSEEN | (seen_[cl] & CA_SearchState::VAR_MASK);
+    seen(cl) = CA_SearchState::CL_IN_SUP_COMP_UNSEEN | (seen(cl) & CA_SearchState::VAR_MASK);
   }
 
   void setVar_nil(VariableIndex v) {
-    seen_[v] &= CA_SearchState::CL_MASK;
+    seen(v) &= CA_SearchState::CL_MASK;
   }
 
   void setClause_nil(ClauseIndex cl) {
-    seen_[cl] &= CA_SearchState::VAR_MASK;
+    seen(cl) &= CA_SearchState::VAR_MASK;
   }
 
   void setVar_seen(VariableIndex v) {
-    seen_[v] = CA_SearchState::VAR_SEEN | (seen_[v] & CA_SearchState::CL_MASK);
+    seen(v) = CA_SearchState::VAR_SEEN | (seen(v) & CA_SearchState::CL_MASK);
   }
 
   void setClause_seen(ClauseIndex cl) {
     setClause_nil(cl);
-    seen_[cl] = CA_SearchState::CL_SEEN | (seen_[cl] & CA_SearchState::VAR_MASK);
+    seen(cl) = CA_SearchState::CL_SEEN | (seen(cl) & CA_SearchState::VAR_MASK);
   }
 
   void setClause_seen(ClauseIndex cl, bool all_lits_act) {
       setClause_nil(cl);
-      seen_[cl] = CA_SearchState::CL_SEEN
+      seen(cl) = CA_SearchState::CL_SEEN
                 | ( all_lits_act
                   ? CA_SearchState::CL_ALL_LITS_ACTIVE
                   : CA_SearchState::NIL )
-                | (seen_[cl] & CA_SearchState::VAR_MASK);
+                | (seen(cl) & CA_SearchState::VAR_MASK);
     }
 
   void setVar_in_other_comp(VariableIndex v) {
-    seen_[v] = CA_SearchState::VAR_IN_OTHER_COMP | (seen_[v] & CA_SearchState::CL_MASK);
+    seen(v) = CA_SearchState::VAR_IN_OTHER_COMP | (seen(v) & CA_SearchState::CL_MASK);
   }
 
   void setClause_in_other_comp(ClauseIndex cl) {
-    seen_[cl] = CA_SearchState::CL_IN_OTHER_COMP | (seen_[cl] & CA_SearchState::VAR_MASK);
+    seen(cl) = CA_SearchState::CL_IN_OTHER_COMP | (seen(cl) & CA_SearchState::VAR_MASK);
   }
 
   bool var_seen(VariableIndex v) {
-    return seen_[v] & CA_SearchState::VAR_SEEN;
+    return seen(v) & CA_SearchState::VAR_SEEN;
   }
 
   bool clause_seen(ClauseIndex cl) {
-    return seen_[cl] & CA_SearchState::CL_SEEN;
+    return seen(cl) & CA_SearchState::CL_SEEN;
   }
 
   bool clause_all_lits_active(ClauseIndex cl) {
-    return seen_[cl] & CA_SearchState::CL_ALL_LITS_ACTIVE;
+    return seen(cl) & CA_SearchState::CL_ALL_LITS_ACTIVE;
   }
   void setClause_all_lits_active(ClauseIndex cl) {
-    seen_[cl] |= CA_SearchState::CL_ALL_LITS_ACTIVE;
+    seen(cl) |= CA_SearchState::CL_ALL_LITS_ACTIVE;
   }
 
   bool var_nil(VariableIndex v) {
-    return (seen_[v] & CA_SearchState::VAR_MASK) == 0;
+    return (seen(v) & CA_SearchState::VAR_MASK) == 0;
   }
 
   bool clause_nil(ClauseIndex cl) {
-    return (seen_[cl] & CA_SearchState::CL_MASK) == 0;
+    return (seen(cl) & CA_SearchState::CL_MASK) == 0;
   }
 
   bool var_unseen_in_sup_comp(VariableIndex v) {
-    return seen_[v] & CA_SearchState::VAR_IN_SUP_COMP_UNSEEN;
+    return seen(v) & CA_SearchState::VAR_IN_SUP_COMP_UNSEEN;
   }
 
   bool clause_unseen_in_sup_comp(ClauseIndex cl) {
-    return seen_[cl] & CA_SearchState::CL_IN_SUP_COMP_UNSEEN;
+    return seen(cl) & CA_SearchState::CL_IN_SUP_COMP_UNSEEN;
   }
 
   bool var_seen_in_peer_comp(VariableIndex v) {
-    return seen_[v] & CA_SearchState::VAR_IN_OTHER_COMP;
+    return seen(v) & CA_SearchState::VAR_IN_OTHER_COMP;
   }
 
   bool clause_seen_in_peer_comp(ClauseIndex cl) {
-    return seen_[cl] & CA_SearchState::CL_IN_OTHER_COMP;
+    return seen(cl) & CA_SearchState::CL_IN_OTHER_COMP;
   }
 
-  static void initArrays(unsigned max_variable_id, unsigned max_clause_id) {
-    unsigned seen_size = std::max(max_variable_id,max_clause_id)  + 1;
+  static void initArrays(VariableIndex max_variable_id, ClauseIndex max_clause_id) {
+    unsigned seen_size = std::max(
+      static_cast<unsigned>(max_variable_id),
+      static_cast<unsigned>(max_clause_id)
+    ) + 1;
     seen_ = new CA_SearchState[seen_size];
     seen_byte_size_ = sizeof(CA_SearchState) * (seen_size);
     clearArrays();
@@ -185,21 +188,21 @@ public:
     p_new_comp->reserveSpace(stack_size, super_comp().numLongClauses());
     current_comp_for_caching_.clear();
 
-    for (auto v_it = super_comp().varsBegin(); *v_it != varsSENTINEL;  v_it++)
-      if (var_seen(*v_it)) { //we have to put a var into our component
-        p_new_comp->addVar(*v_it);
-        current_comp_for_caching_.addVar(*v_it);
-        setVar_in_other_comp(*v_it);
+    for (auto v_it = super_comp().varsBegin(); VariableIndex(*v_it) != varsSENTINEL;  v_it++)
+      if (var_seen(VariableIndex(*v_it))) { //we have to put a var into our component
+        p_new_comp->addVar(VariableIndex(*v_it));
+        current_comp_for_caching_.addVar(VariableIndex(*v_it));
+        setVar_in_other_comp(VariableIndex(*v_it));
       }
     p_new_comp->closeVariableData();
     current_comp_for_caching_.closeVariableData();
 
-    for (auto it_cl = super_comp().clsBegin(); *it_cl != clsSENTINEL; it_cl++)
-      if (clause_seen(*it_cl)) {
-        p_new_comp->addCl(*it_cl);
-           if(!clause_all_lits_active(*it_cl))
-             current_comp_for_caching_.addCl(*it_cl);
-        setClause_in_other_comp(*it_cl);
+    for (auto it_cl = super_comp().clsBegin(); ClauseIndex(*it_cl) != clsSENTINEL; it_cl++)
+      if (clause_seen(ClauseIndex(*it_cl))) {
+        p_new_comp->addCl(ClauseIndex(*it_cl));
+           if(!clause_all_lits_active(ClauseIndex(*it_cl)))
+             current_comp_for_caching_.addCl(ClauseIndex(*it_cl));
+        setClause_in_other_comp(ClauseIndex(*it_cl));
       }
     p_new_comp->closeClauseData();
     current_comp_for_caching_.closeClauseData();
@@ -232,6 +235,14 @@ public:
 private:
   Component *p_super_comp_;
   StackLevel *p_stack_level_;
+
+  static CA_SearchState& seen(VariableIndex var) {
+    return seen_[static_cast<unsigned>(var)];
+  }
+
+  static CA_SearchState& seen(ClauseIndex cl) {
+    return seen_[static_cast<unsigned>(cl)];
+  }
 
   static CA_SearchState *seen_;
   static unsigned seen_byte_size_;

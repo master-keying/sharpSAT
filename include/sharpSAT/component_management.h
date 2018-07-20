@@ -128,9 +128,9 @@ void ComponentManager::recordRemainingCompsFor(StackLevel &top) {
 
    ana_.setupAnalysisContext(top, super_comp);
 
-   for (auto vt = super_comp.varsBegin(); *vt != varsSENTINEL; vt++)
-     if (ana_.isUnseenAndActive(*vt) &&
-         ana_.exploreRemainingCompOf(*vt)){
+   for (auto vt = super_comp.varsBegin(); VariableIndex(*vt) != varsSENTINEL; vt++) 
+     if (ana_.isUnseenAndActive(VariableIndex(*vt)) &&
+         ana_.exploreRemainingCompOf(VariableIndex(*vt))){
 
        Component *p_new_comp = ana_.makeComponentFromArcheType();
        CacheableComponent *packed_comp = new CacheableComponent(ana_.getArchetype().current_comp_for_caching_);

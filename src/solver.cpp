@@ -50,8 +50,8 @@ bool Solver::prepFailedLiteralTest() {
 	unsigned last_size;
 	do {
 		last_size = literal_stack_.size();
-		for (unsigned v = 1; v < variables_.size(); v++)
-			if (isActive(v)) {
+		for (VariableIndex v(1); v < VariableIndex(variables_.size()); v++)
+		    if (isActive(LiteralID(v, true))) {
 				unsigned sz = literal_stack_.size();
 				setLiteralIfFree(LiteralID(v, true));
 				bool res = BCP(sz);
@@ -92,7 +92,7 @@ void Solver::HardWireAndCompact() {
 	compactVariables();
 	literal_stack_.clear();
 
-	for (auto l = LiteralID(1, false); l != literals_.end_lit(); l.inc()) {
+	for (auto l = LiteralID(VariableIndex(1), false); l != literals_.end_lit(); l.inc()) {
 		literal(l).activity_score_ = literal(l).binary_links_.size() - 1;
 		literal(l).activity_score_ += occurrence_lists_[l].size();
 	}
@@ -213,19 +213,19 @@ void Solver::decideLiteral() {
 					comp_manager_.component_stack_size()));
 	float max_score = -1;
 	float score;
-	unsigned max_score_var = 0;
+	VariableIndex max_score_var(0);
 	for (auto it =
 			comp_manager_.superComponentOf(stack_.top()).varsBegin();
-			*it != varsSENTINEL; it++) {
-		score = scoreOf(*it);
+			VariableIndex(*it) != varsSENTINEL; it++) {
+		score = scoreOf(VariableIndex(*it));
 		if (score > max_score) {
 			max_score = score;
-			max_score_var = *it;
+			max_score_var = VariableIndex(*it);
 		}
 	}
 	// this assert should always hold,
 	// if not then there is a bug in the logic of countSAT();
-	assert(max_score_var != 0);
+	assert(max_score_var != VariableIndex(0));
 
 	LiteralID theLit(max_score_var,
 			literal(LiteralID(max_score_var, true)).activity_score_
@@ -604,7 +604,8 @@ bool Solver::implicitBCP() {
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 void Solver::minimizeAndStoreUIPClause(LiteralID uipLit,
-		vector<LiteralID> & tmp_clause, std::vector<bool> const& seen) {
+		vector<LiteralID> & tmp_clause,
+		const VariableIndexedVector<bool>& seen) {
 	static deque<LiteralID> clause;
 	clause.clear();
 	assertion_level_ = 0;
@@ -616,7 +617,7 @@ void Solver::minimizeAndStoreUIPClause(LiteralID uipLit,
 			resolve_out = true;
 			if (getAntecedent(lit).isAClause()) {
 				for (auto it = beginOf(getAntecedent(lit).asCl()) + 1;
-						*it != SENTINEL_CL; it++)
+						*it != SENTINEL_LIT; it++)
 					if (!seen[it->var()]) {
 						resolve_out = false;
 						break;
@@ -636,11 +637,11 @@ void Solver::minimizeAndStoreUIPClause(LiteralID uipLit,
 		}
 	}
 
-	if(uipLit.var())
+	if(uipLit.var() != VariableIndex(0))
 	 assert(var(uipLit).decision_level == stack_.get_decision_level());
 
 	//assert(uipLit.var() != 0);
-	if (uipLit.var() != 0)
+	if (uipLit.var() != VariableIndex(0))
 		clause.push_front(uipLit);
 	uip_clauses_.push_back(vector<LiteralID>(clause.begin(), clause.end()));
 }
@@ -654,7 +655,7 @@ void Solver::recordLastUIPCauses() {
     // ToDo:: This can cause some slowdown because of allocations.
     //        If this proves problematic, we can cache the allocation,
     //        as the number of variables should remain constant after init
-    std::vector<bool> seen(num_variables() + 1);
+    VariableIndexedVector<bool> seen(num_variables() + 1);
 
 	static vector<LiteralID> tmp_clause;
 	tmp_clause.clear();
@@ -707,7 +708,7 @@ void Solver::recordLastUIPCauses() {
 			assert(curr_lit == *beginOf(getAntecedent(curr_lit).asCl()));
 
 			for (auto it = beginOf(getAntecedent(curr_lit).asCl()) + 1;
-					*it != SENTINEL_CL; it++) {
+					*it != SENTINEL_LIT; it++) {
 				if (seen[it->var()] || (var(*it).decision_level == 0)
 						|| existsUnitClauseOf(it->var()))
 					continue;
@@ -750,7 +751,7 @@ void Solver::recordAllUIPCauses() {
     // ToDo:: This can cause some slowdown because of allocations.
     //        If this proves problematic, we can cache the allocation,
     //        as the number of variables should remain constant after init
-    std::vector<bool> seen(num_variables() + 1);
+    VariableIndexedVector<bool> seen(num_variables() + 1);
 
 	static vector<LiteralID> tmp_clause;
 	tmp_clause.clear();
@@ -802,7 +803,7 @@ void Solver::recordAllUIPCauses() {
 			assert(curr_lit == *beginOf(getAntecedent(curr_lit).asCl()));
 
 			for (auto it = beginOf(getAntecedent(curr_lit).asCl()) + 1;
-					*it != SENTINEL_CL; it++) {
+					*it != SENTINEL_LIT; it++) {
 				if (seen[it->var()] || (var(*it).decision_level == 0)
 						|| existsUnitClauseOf(it->var()))
 					continue;

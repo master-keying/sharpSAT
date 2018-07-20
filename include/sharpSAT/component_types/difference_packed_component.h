@@ -77,7 +77,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
 
   unsigned max_var_diff = 0;
   unsigned hashkey_vars = *rComp.varsBegin();
-  for (auto it = rComp.varsBegin() + 1; *it != varsSENTINEL; it++) {
+  for (auto it = rComp.varsBegin() + 1; VariableIndex(*it) != varsSENTINEL; it++) {
     hashkey_vars = (hashkey_vars * 3) + *it;
     if ((*it - *(it - 1)) - 1 > max_var_diff)
       max_var_diff = (*it - *(it - 1)) - 1 ;
@@ -86,7 +86,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
   unsigned hashkey_clauses = *rComp.clsBegin();
   unsigned max_clause_diff = 0;
   if (*rComp.clsBegin()) {
-    for (auto jt = rComp.clsBegin() + 1; *jt != clsSENTINEL; jt++) {
+    for (auto jt = rComp.clsBegin() + 1; ClauseIndex(*jt) != clsSENTINEL; jt++) {
       hashkey_clauses = hashkey_clauses*3 + *jt;
       if (*jt - *(jt - 1) - 1 > max_clause_diff)
         max_clause_diff = *jt - *(jt - 1) - 1;
@@ -124,7 +124,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
   bs.stuff(*rComp.varsBegin(), bits_per_variable());
 
   if(bits_per_var_diff)
-  for (auto it = rComp.varsBegin() + 1; *it != varsSENTINEL; it++)
+  for (auto it = rComp.varsBegin() + 1; VariableIndex(*it) != varsSENTINEL; it++)
     bs.stuff(*it - *(it - 1) - 1, bits_per_var_diff);
 
 
@@ -132,7 +132,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
     bs.stuff(bits_per_clause_diff, 5);
     bs.stuff(*rComp.clsBegin(), bits_per_clause());
     if(bits_per_clause_diff)
-     for (auto jt = rComp.clsBegin() + 1; *jt != clsSENTINEL; jt++)
+     for (auto jt = rComp.clsBegin() + 1; ClauseIndex(*jt) != clsSENTINEL; jt++)
       bs.stuff(*jt - *(jt - 1) - 1, bits_per_clause_diff);
   }
 

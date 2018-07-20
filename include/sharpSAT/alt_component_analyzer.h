@@ -43,7 +43,7 @@ public:
       std::vector<LiteralID> &lit_pool);
 
 
-  bool isUnseenAndActive(VariableIndex v){
+  bool isUnseenAndActive(VariableIndex v) {
     assert(v <= max_variable_id_);
     return archetype_.var_unseen_in_sup_comp(v);
   }
@@ -60,7 +60,7 @@ public:
       return false;
     }
   bool manageSearchOccurrenceAndScoreOf(LiteralID lit){
-    var_frequency_scores_[lit.var()]+= isActive(lit);
+    var_frequency_scores_[lit.var()] += isActive(lit);
     return manageSearchOccurrenceOf(lit);
   }
 
@@ -74,14 +74,14 @@ public:
   void setupAnalysisContext(StackLevel &top, Component & super_comp){
      archetype_.reInitialize(top,super_comp);
 
-     for (auto vt = super_comp.varsBegin(); *vt != varsSENTINEL; vt++)
-       if (isActive(*vt)) {
-         archetype_.setVar_in_sup_comp_unseen(*vt);
-         var_frequency_scores_[*vt] = 0;
+     for (auto vt = super_comp.varsBegin(); VariableIndex(*vt) != varsSENTINEL; vt++)
+       if (isActive(VariableIndex(*vt))) {
+         archetype_.setVar_in_sup_comp_unseen(VariableIndex(*vt));
+         var_frequency_scores_[VariableIndex(*vt)] = 0;
        }
 
-     for (auto itCl = super_comp.clsBegin(); *itCl != clsSENTINEL; itCl++)
-         archetype_.setClause_in_sup_comp_unseen(*itCl);
+     for (auto itCl = super_comp.clsBegin(); ClauseIndex(*itCl) != clsSENTINEL; itCl++)
+         archetype_.setClause_in_sup_comp_unseen(ClauseIndex(*itCl));
   }
 
   // returns true, iff the component found is non-trivial
@@ -102,10 +102,11 @@ public:
     return archetype_.makeComponentFromState(search_stack_.size());
   }
 
-  unsigned max_clause_id(){
+  ClauseIndex max_clause_id(){
      return max_clause_id_;
   }
-  unsigned max_variable_id(){
+
+  VariableIndex max_variable_id(){
     return max_variable_id_;
   }
 
@@ -117,8 +118,8 @@ private:
   // the id of the last clause
   // note that clause ID is the clause number,
   // different from the offset of the clause in the literal pool
-  unsigned max_clause_id_ = 0;
-  unsigned max_variable_id_ = 0;
+  ClauseIndex max_clause_id_ = ClauseIndex(0);
+  VariableIndex max_variable_id_ = VariableIndex(0);
 
   // this contains clause offsets of the clauses
   // where each variable occurs in;
@@ -133,11 +134,11 @@ private:
   std::vector<unsigned> unified_variable_links_lists_pool_;
 
 
-  std::vector<unsigned> variable_link_list_offsets_;
+  VariableIndexedVector<unsigned> variable_link_list_offsets_;
 
   LiteralIndexedVector<TriValue> & literal_values_;
 
-  std::vector<unsigned> var_frequency_scores_;
+  VariableIndexedVector<unsigned> var_frequency_scores_;
 
   ComponentArchetype  archetype_;
 
@@ -170,13 +171,13 @@ private:
   void recordComponentOf(const VariableIndex var);
 
 
-  void getClause(std::vector<unsigned> &tmp,
+  void getClause(std::vector<LiteralID> &tmp,
    		       std::vector<LiteralID>::iterator & it_start_of_cl,
-   		       LiteralID & omitLit){
+   		       VariableIndex omitVar) {
   	  tmp.clear();
   	  for (auto it_lit = it_start_of_cl;*it_lit != SENTINEL_LIT; it_lit++) {
-   		  if(it_lit->var() != omitLit.var())
-   			 tmp.push_back(it_lit->raw());
+   		  if(it_lit->var() != omitVar)
+   			 tmp.push_back(*it_lit);
    	  }
      }
 

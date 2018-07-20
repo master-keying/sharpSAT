@@ -8,6 +8,8 @@
 #ifndef SHARP_SAT_BASE_PACKED_COMPONENT_H_
 #define SHARP_SAT_BASE_PACKED_COMPONENT_H_
 
+#include <sharpSAT/primitive_types.h>
+
 #include <assert.h>
 #include <cstddef>
 #include <gmpxx.h>
@@ -79,7 +81,7 @@ public:
     return _bits_of_data_size;
   }
 
-  static void adjustPackSize(unsigned int maxVarId, unsigned int maxClId);
+  static void adjustPackSize(VariableIndex maxVarId, ClauseIndex maxClId);
 
   BasePackedComponent() {}
   BasePackedComponent(unsigned creation_time): creation_time_(creation_time) {}

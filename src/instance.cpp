@@ -60,7 +60,7 @@ void Instance::compactClauses() {
       if (it_lit + 1 == literal_pool_.end())
         break;
       it_lit += ClauseHeader::overheadInLits();
-      clause_ofs.push_back(1 + it_lit - literal_pool_.begin());
+      clause_ofs.push_back(ClauseOfs(1 + it_lit - literal_pool_.begin()));
     }
   }
 
@@ -79,11 +79,11 @@ void Instance::compactClauses() {
   ClauseOfs new_ofs;
   unsigned num_clauses = 0;
   for (auto ofs : clause_ofs) {
-    auto it = (tmp_pool.begin() + ofs);
+    auto it = (tmp_pool.begin() + static_cast<unsigned>(ofs));
     if (*it != SENTINEL_LIT) {
       for (unsigned i = 0; i < ClauseHeader::overheadInLits(); i++)
-        literal_pool_.push_back(0);
-      new_ofs = literal_pool_.size();
+        literal_pool_.push_back(LiteralID());
+      new_ofs = ClauseOfs(literal_pool_.size());
       literal(*it).addWatchLinkTo(new_ofs);
       literal(*(it + 1)).addWatchLinkTo(new_ofs);
       num_clauses++;
@@ -111,8 +111,8 @@ void Instance::compactClauses() {
 }
 
 void Instance::compactVariables() {
-  vector<unsigned> var_map(variables_.size(), 0);
-  unsigned last_ofs = 0;
+  VariableIndexedVector<VariableIndex> var_map(variables_.size(), VariableIndex(0));
+  VariableIndex last_ofs(0);
   unsigned num_isolated = 0;
   LiteralIndexedVector<vector<LiteralID> > _tmp_bin_links(1);
   LiteralIndexedVector<TriValue> _tmp_values = literal_values_;
@@ -121,8 +121,8 @@ void Instance::compactVariables() {
     _tmp_bin_links.push_back(l.binary_links_);
 
   assert(_tmp_bin_links.size() == literals_.size());
-  for (unsigned v = 1; v < variables_.size(); v++)
-    if (isActive(v)) {
+  for (VariableIndex v(1); v < VariableIndex(variables_.size()); v++)
+    if (isActive(LiteralID(v, true))) {
       if (isolated(v)) {
         num_isolated++;
         continue;
@@ -132,7 +132,7 @@ void Instance::compactVariables() {
     }
 
   variables_.clear();
-  variables_.resize(last_ofs + 1);
+  variables_.resize(static_cast<unsigned>(last_ofs) + 1);
   occurrence_lists_.clear();
   occurrence_lists_.resize(variables_.size());
   literals_.clear();
@@ -142,11 +142,11 @@ void Instance::compactVariables() {
 
   unsigned bin_links = 0;
   LiteralID newlit;
-  for (auto l = LiteralID(0, false); l != _tmp_bin_links.end_lit(); l.inc()) {
-    if (var_map[l.var()] != 0) {
+  for (auto l = LiteralID(VariableIndex(0), false); l != _tmp_bin_links.end_lit(); l.inc()) {
+    if (var_map[l.var()] != VariableIndex(0)) {
       newlit = LiteralID(var_map[l.var()], l.sign());
       for (auto it = _tmp_bin_links[l].begin(); *it != SENTINEL_LIT; it++) {
-        assert(var_map[it->var()] != 0);
+        assert(var_map[it->var()] != VariableIndex(0));
         literals_[newlit].addBinLinkTo(
             LiteralID(var_map[it->var()], it->sign()));
       }
@@ -163,7 +163,7 @@ void Instance::compactVariables() {
       if (it_lit + 1 == literal_pool_.end())
         break;
       it_lit += ClauseHeader::overheadInLits();
-      clause_ofs.push_back(1 + it_lit - literal_pool_.begin());
+      clause_ofs.push_back(ClauseOfs(1 + it_lit - literal_pool_.begin()));
     }
   }
 
@@ -196,7 +196,7 @@ void Instance::compactConflictLiteralPool(){
     auto read_pos = beginOf(clause_ofs) - ClauseHeader::overheadInLits();
     for(unsigned i = 0; i < ClauseHeader::overheadInLits(); i++)
       *(write_pos++) = *(read_pos++);
-    ClauseOfs new_ofs =  write_pos - literal_pool_.begin();
+    ClauseOfs new_ofs = ClauseOfs(write_pos - literal_pool_.begin());
     conflict_clauses_.push_back(new_ofs);
     // first substitute antecedent if clause_ofs implied something
     if(isAntecedentOf(clause_ofs, *beginOf(clause_ofs)))
@@ -313,7 +313,7 @@ void Instance::add_clause(std::vector<LiteralID>& literals) {
   statistics_.incorporateClauseData(literals);
   ClauseOfs cl_ofs = addClause(literals);
   if (literals.size() >= 3) {
-    assert(cl_ofs > 0);
+    assert(static_cast<unsigned>(cl_ofs) > 0);
     for (auto l : literals)
       occurrence_lists_[l].push_back(cl_ofs);
   }
@@ -362,10 +362,10 @@ bool Instance::createfromFile(const string &file_name) {
   // estimate literal count
   struct stat filestatus;
   stat(file_name.c_str(), &filestatus);
-  // prepare to be filled 
+  // prepare to be filled
   initialize(nVars, nCls, filestatus.st_size);
 
-  
+
   vector<LiteralID> literals;
   literals.reserve(10000);
 
@@ -388,7 +388,7 @@ bool Instance::createfromFile(const string &file_name) {
           }
         }
         if (!duplicate_literal) {
-          literals.push_back(lit);
+          literals.push_back(LiteralID(lit));
         }
       }
       if (!skip_clause) {

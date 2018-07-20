@@ -79,7 +79,8 @@ protected:
   }
 
   bool free(VariableIndex v) {
-    return isolated(v) & isActive(v);
+    auto true_lit = LiteralID(v, true);
+    return isolated(v) & isActive(true_lit);
   }
 
   bool deleteConflictClauses();
@@ -149,7 +150,7 @@ protected:
   //! Clauses with only 1 literal.
   std::vector<LiteralID> unit_clauses_;
 
-  std::vector<Variable> variables_;
+  VariableIndexedVector<Variable> variables_;
   LiteralIndexedVector<TriValue> literal_values_;
 
   void decayActivities() {
@@ -197,7 +198,7 @@ protected:
     return true;
   }
 
-  inline ClauseIndex addClause(std::vector<LiteralID> &literals);
+  inline ClauseOfs addClause(std::vector<LiteralID> &literals);
 
   // adds a UIP Conflict Clause
   // and returns it as an Antecedent to the first
@@ -231,10 +232,10 @@ protected:
   }
 
   std::vector<LiteralID>::const_iterator beginOf(ClauseOfs cl_ofs) const {
-    return literal_pool_.begin() + cl_ofs;
+    return literal_pool_.begin() + static_cast<unsigned>(cl_ofs);
   }
   std::vector<LiteralID>::iterator beginOf(ClauseOfs cl_ofs) {
-    return literal_pool_.begin() + cl_ofs;
+    return literal_pool_.begin() + static_cast<unsigned>(cl_ofs);
   }
 
   decltype(literal_pool_.begin()) conflict_clauses_begin() {
@@ -242,8 +243,8 @@ protected:
    }
 
   ClauseHeader &getHeaderOf(ClauseOfs cl_ofs) {
-    return *reinterpret_cast<ClauseHeader *>(&literal_pool_[cl_ofs
-        - ClauseHeader::overheadInLits()]);
+    return *reinterpret_cast<ClauseHeader *>(&literal_pool_[
+      static_cast<unsigned>(cl_ofs) - ClauseHeader::overheadInLits() ]);
   }
 
   bool isSatisfied(ClauseOfs cl_ofs) {
@@ -258,27 +259,27 @@ protected:
  * Internal method to add a new clause.
  *
  * @returns ID of its first literal within \ref literal_pool_
- *          or 0 if the clause was neither unit, nor binary
+ *          or \ref NOT_A_CLAUSE if the clause was neither unit, nor binary
  */
-ClauseIndex Instance::addClause(std::vector<LiteralID> &literals) {
+ClauseOfs Instance::addClause(std::vector<LiteralID> &literals) {
   if (literals.size() == 1) {
     // TODO Deal properly with the situation that opposing unit clauses are learned.
     //      This should probably call addUnitClause(literals[0]) and inspect retval.
     assert(!isUnitClause(literals[0].neg()));
     unit_clauses_.push_back(literals[0]);
-    return 0;
+    return NOT_A_CLAUSE;
   }
   if (literals.size() == 2) {
     addBinaryClause(literals[0], literals[1]);
-    return 0;
+    return NOT_A_CLAUSE;
   }
 
   // make room for ClauseHeader in literal_pool_
   for (unsigned i = 0; i < ClauseHeader::overheadInLits(); i++)
-    literal_pool_.push_back(0);
+    literal_pool_.push_back(LiteralID());
 
   // where the literals will start
-  ClauseOfs cl_ofs = literal_pool_.size();
+  ClauseOfs cl_ofs = ClauseOfs(literal_pool_.size());
   for (auto l : literals) {
     literal_pool_.push_back(l);
     literal(l).increaseActivity(1);
@@ -312,7 +313,7 @@ Antecedent Instance::addUIPConflictClause(std::vector<LiteralID> &literals) {
     Antecedent ante(NOT_A_CLAUSE);
     statistics_.num_clauses_learned_++;
     ClauseOfs cl_ofs = addClause(literals);
-    if (cl_ofs != 0) {
+    if (cl_ofs != ClauseOfs(0)) {
       conflict_clauses_.push_back(cl_ofs);
       getHeaderOf(cl_ofs).set_length(literals.size());
       ante = Antecedent(cl_ofs);
