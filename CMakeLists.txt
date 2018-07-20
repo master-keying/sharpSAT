@@ -9,16 +9,41 @@ include(GNUInstallDirs)
 
 add_library(libsharpSAT STATIC
     src/alt_component_analyzer.cpp
-	src/component_analyzer.cpp
-	src/component_cache.cpp
-	src/component_management.cpp
-	src/instance.cpp
-	src/new_component_analyzer.cpp
-	src/solver.cpp
-	src/statistics.cpp
-	src/stopwatch.cpp
-	src/component_types/base_packed_component.cpp
-	src/component_types/component_archetype.cpp
+    src/component_analyzer.cpp
+    src/component_cache.cpp
+    src/component_management.cpp
+    src/instance.cpp
+    src/new_component_analyzer.cpp
+    src/solver.cpp
+    src/statistics.cpp
+    src/stopwatch.cpp
+    src/structures.cpp
+    src/component_types/base_packed_component.cpp
+    src/component_types/component_archetype.cpp
+    # headers
+    include/sharpSAT/alt_component_analyzer.h
+    include/sharpSAT/component_analyzer.h
+    include/sharpSAT/component_cache.h
+    include/sharpSAT/component_cache-inl.h
+    include/sharpSAT/component_management.h
+    include/sharpSAT/containers.h
+    include/sharpSAT/instance.h
+    include/sharpSAT/new_component_analyzer.h
+    include/sharpSAT/primitive_types.h
+    include/sharpSAT/solver_config.h
+    include/sharpSAT/solver.h
+    include/sharpSAT/stack.h
+    include/sharpSAT/statistics.h
+    include/sharpSAT/stopwatch.h
+    include/sharpSAT/structures.h
+    include/sharpSAT/component_types/base_packed_component.h
+    include/sharpSAT/component_types/cacheable_component.h
+    include/sharpSAT/component_types/component_archetype.h
+    include/sharpSAT/component_types/component.h
+    include/sharpSAT/component_types/difference_packed_component.h
+    include/sharpSAT/component_types/simple_packed_component.h
+    include/sharpSAT/component_types/simple_unpacked_component.h
+    include/sharpSAT/containers/binary_heap.h
 )
 
 # Keep the library named as either libsharpSAT.a or sharpSAT.lib

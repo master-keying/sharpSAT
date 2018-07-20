@@ -9,6 +9,7 @@
 #define SHARP_SAT_COMPONENT_H_
 
 #include <assert.h>
+#include <cstddef>
 #include <vector>
 
 #include <sharpSAT/primitive_types.h>
@@ -66,7 +67,7 @@ public:
     return clauses_ofs_ - 1;
   }
 
-  unsigned numLongClauses() const {
+  size_t numLongClauses() const {
     return data_.size() - clauses_ofs_ - 1;
   }
 

@@ -97,7 +97,7 @@ private:
 	// this is the actual BCP algorithm
 	// starts propagating all literal in literal_stack_
 	// beginingg at offset start_at_stack_ofs
-	bool BCP(unsigned start_at_stack_ofs);
+	bool BCP(size_t start_at_stack_ofs);
 
 	retStateT backtrack();
 
@@ -180,7 +180,7 @@ private:
 	}
 
 	bool fail_test(LiteralID lit) {
-		unsigned sz = literal_stack_.size();
+		size_t sz = literal_stack_.size();
 		// we increase the decLev artificially
 		// s.t. after the tentative BCP call, we can learn a conflict clause
 		// relative to the assignment of *jt

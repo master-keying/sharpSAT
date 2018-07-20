@@ -9,6 +9,7 @@
 #include <sharpSAT/stack.h>
 
 #include <algorithm>
+#include <iostream>
 
 #ifdef __linux__
 

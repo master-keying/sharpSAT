@@ -8,6 +8,7 @@
 #include <sharpSAT/instance.h>
 
 #include <algorithm>
+#include <iostream>
 #include <fstream>
 #include <sys/stat.h>
 

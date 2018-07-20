@@ -11,6 +11,9 @@ using namespace std;
 
 namespace sharpSAT {
 
+static_assert(((sizeof(CAClauseHeader) - 2 * sizeof(LiteralID)) / sizeof(LiteralID)) * sizeof(LiteralID) + 2 * sizeof(LiteralID) == sizeof(CAClauseHeader),
+                "Modified size of CAClauseHeader and LiteralID must be evenly divisible");
+
 void STDComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
     vector<LiteralID> &lit_pool) {
 

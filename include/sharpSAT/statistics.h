@@ -187,16 +187,8 @@ public:
   void writeToFile(const std::string & file_name);
 
   void printShort();
+  void printShortFormulaInfo();
 
-  void printShortFormulaInfo() {
-    std::cout << "variables (all/used/free): \t";
-    std::cout << num_variables_ << "/" << num_used_variables_ << "/";
-    std::cout << num_variables_ - num_used_variables_ << std::endl;
-
-    std::cout << "clauses (all/long/binary/unit): ";
-    std::cout << num_clauses() << "/" << num_long_clauses_;
-    std::cout << "/" << num_binary_clauses_ << "/" << num_unit_clauses_ << std::endl;
-  }
   unsigned getTime() {
     return num_decisions_;
   }
