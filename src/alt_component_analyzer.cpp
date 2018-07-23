@@ -172,7 +172,7 @@ void AltComponentAnalyzer::recordComponentOf(const VariableIndex var) {
   for (auto vt = search_stack_.begin(); vt != search_stack_.end(); vt++) {
     //BEGIN traverse binary clauses
     assert(isActive(*vt));
-    unsigned *p = beginOfLinkList(*vt);
+    auto p = beginOfLinkList(*vt);
     for (; *p; p++) {
       if(manageSearchOccurrenceOf(LiteralID(VariableIndex(*p),true))){
         var_frequency_scores_[VariableIndex(*p)]++;
@@ -183,8 +183,9 @@ void AltComponentAnalyzer::recordComponentOf(const VariableIndex var) {
 
     for ( p++; *p ; p+=3) {
       if(archetype_.clause_unseen_in_sup_comp(ClauseIndex(*p))) {
-        LiteralID litA = *reinterpret_cast<const LiteralID *>(p + 1);
-        LiteralID litB = *(reinterpret_cast<const LiteralID *>(p + 1) + 1);
+        LiteralID litA, litB;
+        litA.copyRaw(*(p + 1));
+        litB.copyRaw(*(p + 2));
         if(isSatisfied(litA)|| isSatisfied(litB))
           archetype_.setClause_nil(ClauseIndex(*p));
         else {
@@ -200,7 +201,7 @@ void AltComponentAnalyzer::recordComponentOf(const VariableIndex var) {
 
     for (p++; *p ; p +=2)
       if(archetype_.clause_unseen_in_sup_comp(ClauseIndex(*p)))
-        searchClause(*vt,ClauseIndex(*p), reinterpret_cast<LiteralID *>(p + 1 + *(p+1)));
+        searchClause(*vt,ClauseIndex(*p), p + 1 + *(p+1));
   }
 }
 

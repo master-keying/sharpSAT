@@ -159,8 +159,8 @@ private:
     return literal_values_[LiteralID(v, true)] == TriValue::X_TRI;
   }
 
-  unsigned *beginOfLinkList(VariableIndex v) {
-    return &unified_variable_links_lists_pool_[variable_link_list_offsets_[v]];
+  std::vector<unsigned>::iterator beginOfLinkList(VariableIndex v) {
+    return unified_variable_links_lists_pool_.begin() + variable_link_list_offsets_[v];
   }
 
   // stores all information about the component of var
@@ -182,17 +182,21 @@ private:
      }
 
 
-  void searchClause(VariableIndex vt, ClauseIndex clID, LiteralID * pstart_cls){
+  void searchClause(VariableIndex vt, ClauseIndex clID,
+      std::vector<unsigned>::iterator pstart_cls) {
+
     auto original_size = search_stack_.size();
     bool all_lits_active = true;
-    for (auto itL = pstart_cls; *itL != SENTINEL_LIT; itL++) {
-      assert(itL->var() <= max_variable_id_);
-      if(!archetype_.var_nil(itL->var()))
-        manageSearchOccurrenceAndScoreOf(*itL);
+    for (auto itL = pstart_cls; *itL != 0; itL++) {
+      LiteralID lit; lit.copyRaw(*itL);
+
+      assert(lit.var() <= max_variable_id_);
+      if(!archetype_.var_nil(lit.var()))
+        manageSearchOccurrenceAndScoreOf(lit);
       else {
-        assert(!isActive(*itL));
+        assert(!isActive(lit));
         all_lits_active = false;
-        if (isResolved(*itL))
+        if (isResolved(lit))
           continue;
         //BEGIN accidentally entered a satisfied clause: undo the search process
         while (search_stack_.size() != original_size) {
@@ -201,9 +205,12 @@ private:
           search_stack_.pop_back();
         }
         archetype_.setClause_nil(clID);
-        while(*itL != SENTINEL_LIT)
-          if(isActive(*(--itL)))
-            var_frequency_scores_[itL->var()]--;
+        while(*itL != 0) {
+          LiteralID lit2;
+          lit2.copyRaw(*(--itL));
+          if(isActive(lit2))
+            var_frequency_scores_[lit2.var()]--;
+        }
         //END accidentally entered a satisfied clause: undo the search process
         break;
       }

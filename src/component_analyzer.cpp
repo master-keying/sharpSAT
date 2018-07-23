@@ -108,7 +108,7 @@ void STDComponentAnalyzer::recordComponentOf(const VariableIndex var) {
     // the for-loop is applicable here because componentSearchStack.capacity() == countAllVars()
     //BEGIN traverse binary clauses
     assert(isActive(*vt));
-    unsigned *pvar = beginOfLinkList(*vt);
+    auto pvar = beginOfLinkList(*vt);
     for (; *pvar; pvar++) {
       if(isUnseenAndActive(VariableIndex(*pvar))) {
         setSeenAndStoreInSearchStack(VariableIndex(*pvar));

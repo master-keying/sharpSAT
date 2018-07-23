@@ -189,8 +189,8 @@ private:
       static_cast<unsigned>(cl_ofs) - CAClauseHeader::overheadInLits()]);
   }
 
-  unsigned *beginOfLinkList(VariableIndex v) {
-    return &unified_variable_links_lists_pool_[variable_link_list_offsets_[v]];
+  std::vector<unsigned>::iterator beginOfLinkList(VariableIndex v) {
+    return unified_variable_links_lists_pool_.begin() + variable_link_list_offsets_[v];
   }
 
   std::vector<LiteralID>::iterator beginOfClause(ClauseOfs cl_ofs) {

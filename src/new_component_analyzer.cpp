@@ -109,7 +109,7 @@ void NewComponentAnalyzer::recordComponentOf(const VariableIndex var) {
       vt != search_stack_.end(); vt++) {
     //BEGIN traverse binary clauses
     assert(isActive(*vt));
-    unsigned *pvar = beginOfLinkList(*vt);
+    auto pvar = beginOfLinkList(*vt);
     for (; *pvar; pvar++) {
       if(isUnseenAndActive(VariableIndex(*pvar))){
         setSeenAndStoreInSearchStack(VariableIndex(*pvar));
@@ -129,13 +129,15 @@ void NewComponentAnalyzer::recordComponentOf(const VariableIndex var) {
       if(archetype_.clause_unseen_in_sup_comp(clID)){
         auto itVEnd = search_stack_.end();
         bool all_lits_active = true;
-        LiteralID * pstart_cls = reinterpret_cast<LiteralID *>(pcl_ofs + 1 + *(pcl_ofs+1));
-        for (auto itL = pstart_cls; *itL != SENTINEL_LIT; itL++) {
-          assert(itL->var() <= max_variable_id_);
-          if(archetype_.var_nil(itL->var())){
-            assert(!isActive(*itL));
+        auto pstart_cls = pcl_ofs + 1 + *(pcl_ofs+1);
+        for (auto itL = pstart_cls; *itL != 0; itL++) {
+          LiteralID lit; lit.copyRaw(*itL);
+
+          assert(lit.var() <= max_variable_id_);
+          if(archetype_.var_nil(lit.var())) {
+            assert(!isActive(lit));
             all_lits_active = false;
-            if (isResolved(*itL))
+            if (isResolved(lit))
               continue;
             //BEGIN accidentally entered a satisfied clause: undo the search process
             while (search_stack_.end() != itVEnd) {
@@ -144,16 +146,19 @@ void NewComponentAnalyzer::recordComponentOf(const VariableIndex var) {
               search_stack_.pop_back();
             }
             archetype_.setClause_nil(clID);
-            while(*itL != SENTINEL_LIT)
-           	  if(isActive(*(--itL)))
-           	    var_frequency_scores_[itL->var()]--;
+            while(*itL != 0) {
+              LiteralID lit2;
+              lit2.copyRaw(*(--itL));
+           	  if(isActive(lit2))
+           	    var_frequency_scores_[lit2.var()]--;
+            }
             //END accidentally entered a satisfied clause: undo the search process
             break;
           } else {
-            assert(isActive(*itL));
-            var_frequency_scores_[itL->var()]++;
-            if(isUnseenAndActive(itL->var()))
-              setSeenAndStoreInSearchStack(itL->var());
+            assert(isActive(lit));
+            var_frequency_scores_[lit.var()]++;
+            if(isUnseenAndActive(lit.var()))
+              setSeenAndStoreInSearchStack(lit.var());
           }
         }
 
