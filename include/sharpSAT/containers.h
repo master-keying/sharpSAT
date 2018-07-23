@@ -24,11 +24,11 @@ public:
 			std::vector<_T>(size * 2, __value) {
 	}
 	inline _T &operator[](const LiteralID lit) {
-		return *(std::vector<_T>::begin() + lit.raw());
+		return *(std::vector<_T>::begin() + static_cast<unsigned>(lit));
 	}
 
 	inline const _T &operator[](const LiteralID &lit) const {
-		return *(std::vector<_T>::begin() + lit.raw());
+		return *(std::vector<_T>::begin() + static_cast<unsigned>(lit));
 	}
 
 	inline typename std::vector<_T>::iterator begin() {
@@ -82,8 +82,5 @@ struct VariableIndexedVector : public std::vector<T> {
     return std::vector<T>::operator[](static_cast<unsigned>(var));
   }
 }; // var_vactor<T>
-
-
-
 } // sharpSAT namespace
 #endif /* CONTAINERS_H_ */

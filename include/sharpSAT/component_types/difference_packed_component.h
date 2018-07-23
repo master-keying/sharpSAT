@@ -76,20 +76,26 @@ private:
 DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
 
   unsigned max_var_diff = 0;
-  unsigned hashkey_vars = *rComp.varsBegin();
-  for (auto it = rComp.varsBegin() + 1; VariableIndex(*it) != varsSENTINEL; it++) {
-    hashkey_vars = (hashkey_vars * 3) + *it;
-    if ((*it - *(it - 1)) - 1 > max_var_diff)
-      max_var_diff = (*it - *(it - 1)) - 1 ;
+  unsigned hashkey_vars = static_cast<unsigned>(*rComp.varsBegin());
+  for (auto it = rComp.varsBegin() + 1; it->var() != varsSENTINEL; it++) {
+    auto star_it = static_cast<unsigned>(it->var());
+    auto star_it_minus_one = static_cast<unsigned>((it - 1)->var());
+
+    hashkey_vars = (hashkey_vars * 3) + star_it;
+    if ((star_it - star_it_minus_one) - 1 > max_var_diff)
+      max_var_diff = (star_it - star_it_minus_one) - 1;
   }
 
-  unsigned hashkey_clauses = *rComp.clsBegin();
+  unsigned hashkey_clauses = static_cast<unsigned>(*rComp.clsBegin());
   unsigned max_clause_diff = 0;
-  if (*rComp.clsBegin()) {
-    for (auto jt = rComp.clsBegin() + 1; ClauseIndex(*jt) != clsSENTINEL; jt++) {
-      hashkey_clauses = hashkey_clauses*3 + *jt;
-      if (*jt - *(jt - 1) - 1 > max_clause_diff)
-        max_clause_diff = *jt - *(jt - 1) - 1;
+  if (rComp.clsBegin()->cls() != clsSENTINEL) {
+    for (auto jt = rComp.clsBegin() + 1; jt->cls() != clsSENTINEL; jt++) {
+      auto star_jt = static_cast<unsigned>(jt->cls());
+      auto star_jt_minus_one = static_cast<unsigned>((jt - 1)->cls());
+
+      hashkey_clauses = hashkey_clauses*3 + static_cast<unsigned>(*jt);
+      if (star_jt - star_jt_minus_one - 1 > max_clause_diff)
+        max_clause_diff = star_jt - star_jt_minus_one - 1;
     }
   }
 
@@ -107,7 +113,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
   data_size_vars += (rComp.num_variables() - 1) * bits_per_var_diff ;
 
   unsigned data_size_clauses = 0;
-  if(*rComp.clsBegin())
+  if (rComp.clsBegin()->cls() != clsSENTINEL)
     data_size_clauses += bits_per_clause() + 5
        + (rComp.numLongClauses() - 1) * bits_per_clause_diff;
 
@@ -121,19 +127,26 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
   bs.stuff(data_size, bits_of_data_size());
   bs.stuff(rComp.num_variables(), bits_per_variable());
   bs.stuff(bits_per_var_diff, 5);
-  bs.stuff(*rComp.varsBegin(), bits_per_variable());
+  bs.stuff(static_cast<unsigned>(*rComp.varsBegin()), bits_per_variable());
 
   if(bits_per_var_diff)
-  for (auto it = rComp.varsBegin() + 1; VariableIndex(*it) != varsSENTINEL; it++)
-    bs.stuff(*it - *(it - 1) - 1, bits_per_var_diff);
+  for (auto it = rComp.varsBegin() + 1; it->var() != varsSENTINEL; it++) {
+    auto star_it = static_cast<unsigned>(it->var());
+    auto star_it_minus_one = static_cast<unsigned>((it - 1)->var());
+
+    bs.stuff(star_it - star_it_minus_one - 1, bits_per_var_diff);
+  }
 
 
-  if (*rComp.clsBegin()) {
+  if (rComp.clsBegin()->cls() != clsSENTINEL) {
     bs.stuff(bits_per_clause_diff, 5);
-    bs.stuff(*rComp.clsBegin(), bits_per_clause());
+    bs.stuff(static_cast<unsigned>(*rComp.clsBegin()), bits_per_clause());
     if(bits_per_clause_diff)
-     for (auto jt = rComp.clsBegin() + 1; ClauseIndex(*jt) != clsSENTINEL; jt++)
-      bs.stuff(*jt - *(jt - 1) - 1, bits_per_clause_diff);
+     for (auto jt = rComp.clsBegin() + 1; jt->cls() != clsSENTINEL; jt++) {
+      auto star_jt = static_cast<unsigned>(jt->cls());
+      auto star_jt_minus_one = static_cast<unsigned>((jt - 1)->cls());
+      bs.stuff(star_jt - star_jt_minus_one - 1, bits_per_clause_diff);
+     }
   }
 
   // to check wheter the "END" block of bits_per_clause()

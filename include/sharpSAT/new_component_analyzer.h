@@ -71,14 +71,14 @@ public:
   void setupAnalysisContext(StackLevel &top, Component & super_comp){
      archetype_.reInitialize(top,super_comp);
 
-     for (auto vt = super_comp.varsBegin(); VariableIndex(*vt) != varsSENTINEL; vt++)
-       if (isActive(VariableIndex(*vt))) {
-         archetype_.setVar_in_sup_comp_unseen(VariableIndex(*vt));
-         var_frequency_scores_[VariableIndex(*vt)] = 0;
+     for (auto vt = super_comp.varsBegin(); vt->var() != varsSENTINEL; vt++)
+       if (isActive(vt->var())) {
+         archetype_.setVar_in_sup_comp_unseen(vt->var());
+         var_frequency_scores_[vt->var()] = 0;
        }
 
-     for (auto itCl = super_comp.clsBegin(); ClauseIndex(*itCl) != clsSENTINEL; itCl++)
-         archetype_.setClause_in_sup_comp_unseen(ClauseIndex(*itCl));
+     for (auto itCl = super_comp.clsBegin(); itCl->cls() != clsSENTINEL; itCl++)
+         archetype_.setClause_in_sup_comp_unseen(itCl->cls());
   }
 
   // returns true, iff the component found is non-trivial
@@ -145,7 +145,7 @@ private:
   // this should give better cache behaviour,
   // because all links of one variable (binary and nonbinray) are found
   // in one contiguous chunk of memory
-  std::vector<unsigned> unified_variable_links_lists_pool_;
+  std::vector<ClauseOrLiteralOrVariable> unified_variable_links_lists_pool_;
 
   std::vector<ClauseOfs> map_clause_id_to_ofs_;
   VariableIndexedVector<unsigned> variable_link_list_offsets_;
@@ -189,7 +189,7 @@ private:
       static_cast<unsigned>(cl_ofs) - CAClauseHeader::overheadInLits()]);
   }
 
-  std::vector<unsigned>::iterator beginOfLinkList(VariableIndex v) {
+  std::vector<ClauseOrLiteralOrVariable>::iterator beginOfLinkList(VariableIndex v) {
     return unified_variable_links_lists_pool_.begin() + variable_link_list_offsets_[v];
   }
 
@@ -204,16 +204,16 @@ private:
   // after execution component_search_stack.size()==1
   void recordComponentOf(const VariableIndex var);
 
-  void pushLitsInto(std::vector<unsigned> &target,
+  void pushLitsInto(std::vector<ClauseOrLiteral> &target,
 		       const std::vector<LiteralID> &lit_pool,
 		       unsigned start_of_cl,
 		       LiteralID & omitLit){
 	  for (auto it_lit = lit_pool.begin() + start_of_cl;
 			  (*it_lit != SENTINEL_LIT); it_lit++) {
 		  if(it_lit->var() != omitLit.var())
-			  target.push_back(it_lit->raw());
+			  target.push_back(*it_lit);
 	  }
-	  target.push_back(SENTINEL_LIT.raw());
+	  target.push_back(SENTINEL_LIT);
   }
 
 };

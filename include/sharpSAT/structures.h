@@ -35,6 +35,10 @@ public:
     value_ = (std::abs(lit) << 1) + (unsigned) (lit > 0);
   }
 
+  explicit LiteralID(unsigned value)
+  : value_(value)
+  {}
+
   explicit LiteralID(VariableIndex var, bool sign) {
     value_ = (static_cast<unsigned>(var) << 1) + (unsigned) sign;
   }
@@ -48,10 +52,6 @@ public:
   }
 
   void inc(){++value_;}
-
-  void copyRaw(unsigned int v) {
-    value_ = v;
-  }
 
   bool sign() const {
     return (bool) (value_ & 0x01);
@@ -71,7 +71,7 @@ public:
 
   void print() const;
 
-  unsigned raw() const { return value_;}
+  explicit operator unsigned() const { return value_;}
 
 private:
 
@@ -85,6 +85,8 @@ private:
 
   template <class _T> friend class LiteralIndexedVector;
 };
+
+
 
 /*!
  * Not-a-literal is a special literal.
@@ -206,7 +208,7 @@ public:
 
   //! Antecendant represents a literal
   Antecedent(const LiteralID idLit) {
-    val_ = (idLit.raw() << 1);
+    val_ = (static_cast<unsigned>(idLit) << 1);
   }
 
   bool isAClause() const {
@@ -218,9 +220,7 @@ public:
     }
 
   LiteralID asLit() {
-    LiteralID idLit;
-    idLit.copyRaw(val_ >> 1);
-    return idLit;
+    return LiteralID(val_ >> 1);
   }
   // A NON-Antecedent will only be A NOT_A_CLAUSE Clause Id
   bool isAnt() {

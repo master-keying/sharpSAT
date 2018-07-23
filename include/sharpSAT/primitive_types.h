@@ -94,6 +94,14 @@ public:
   bool operator >=(const ClauseIndex& rhs) const
   { return clause_index_ >= rhs.clause_index_; }
 
+  ClauseIndex operator +(const ClauseIndex& rhs) const {
+    return ClauseIndex(clause_index_ + rhs.clause_index_);
+  }
+
+  ClauseIndex operator -(const ClauseIndex& rhs) const {
+    return ClauseIndex(clause_index_ - rhs.clause_index_);
+  }
+
   ClauseIndex& operator ++() {
     ++clause_index_;
     return *this;

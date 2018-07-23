@@ -86,9 +86,9 @@ private:
 
 
 	 void decayActivitiesOf(Component & comp) {
-	   for (auto it = comp.varsBegin(); VariableIndex(*it) != varsSENTINEL; it++) {
-	          literal(LiteralID(VariableIndex(*it),true)).activity_score_ *=0.5;
-	          literal(LiteralID(VariableIndex(*it),false)).activity_score_ *=0.5;
+	   for (auto it = comp.varsBegin(); it->var() != varsSENTINEL; it++) {
+	          literal(LiteralID(it->var(), true)).activity_score_ *=0.5;
+	          literal(LiteralID(it->var(), false)).activity_score_ *=0.5;
 	       }
 	}
 	///  this method performs Failed literal tests online

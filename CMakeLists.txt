@@ -34,6 +34,7 @@ add_library(libsharpSAT STATIC
     include/sharpSAT/statistics.h
     include/sharpSAT/stopwatch.h
     include/sharpSAT/structures.h
+    include/sharpSAT/unions.h
     include/sharpSAT/component_types/base_packed_component.h
     include/sharpSAT/component_types/cacheable_component.h
     include/sharpSAT/component_types/component_archetype.h

@@ -52,7 +52,7 @@ void STDComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
       it_lit += ClauseHeader::overheadInLits();
       curr_clause_length = 0;
 
-      assert(map_clause_id_to_ofs_.size() == static_cast<unsigned>(max_clause_id_));
+      assert(ClauseIndex(map_clause_id_to_ofs_.size()) == max_clause_id_);
       map_clause_id_to_ofs_.push_back(current_clause_ofs);
 
     } else {
@@ -68,26 +68,26 @@ void STDComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
   unified_variable_links_lists_pool_.clear();
   unified_variable_links_lists_pool_.push_back(0);
   unified_variable_links_lists_pool_.push_back(0);
+
   for (VariableIndex v(1); v < VariableIndex(occs_.size()); v++) {
     variable_link_list_offsets_[v] = unified_variable_links_lists_pool_.size();
+
     for (auto l : literals[LiteralID(v, false)].binary_links_)
       if (l != SENTINEL_LIT) {
-        unified_variable_links_lists_pool_.push_back(static_cast<unsigned>(l.var()));
+        unified_variable_links_lists_pool_.push_back(l.var());
       }
     for (auto l : literals[LiteralID(v, true)].binary_links_)
       if (l != SENTINEL_LIT) {
-        unified_variable_links_lists_pool_.push_back(static_cast<unsigned>(l.var()));
+        unified_variable_links_lists_pool_.push_back(l.var());
       }
-    unified_variable_links_lists_pool_.push_back(0);
+    unified_variable_links_lists_pool_.push_back(varsSENTINEL);
 
-    unified_variable_links_lists_pool_.reserve(
-      unified_variable_links_lists_pool_.size()
-      + occs_[v].size() );
-    for (ClauseOfs cl_ofs : occs_[v]) {
-      unified_variable_links_lists_pool_.push_back(static_cast<unsigned>(cl_ofs));
-    }
+    unified_variable_links_lists_pool_.insert(
+        unified_variable_links_lists_pool_.end(),
+        occs_[v].begin(),
+        occs_[v].end());
 
-    unified_variable_links_lists_pool_.push_back(0);
+    unified_variable_links_lists_pool_.push_back(SENTINEL_CL);
   }
 }
 
@@ -109,10 +109,10 @@ void STDComponentAnalyzer::recordComponentOf(const VariableIndex var) {
     //BEGIN traverse binary clauses
     assert(isActive(*vt));
     auto pvar = beginOfLinkList(*vt);
-    for (; *pvar; pvar++) {
-      if(isUnseenAndActive(VariableIndex(*pvar))) {
-        setSeenAndStoreInSearchStack(VariableIndex(*pvar));
-        var_frequency_scores_[VariableIndex(*pvar)]++;
+    for (; pvar->var() != varsSENTINEL; pvar++) {
+      if(isUnseenAndActive(pvar->var())) {
+        setSeenAndStoreInSearchStack(pvar->var());
+        var_frequency_scores_[pvar->var()]++;
         var_frequency_scores_[*vt]++;
       }
     }
@@ -121,13 +121,13 @@ void STDComponentAnalyzer::recordComponentOf(const VariableIndex var) {
     // start traversing links to long clauses
     // not that that list starts right after the 0 termination of the prvious list
     // hence  pcl_ofs = pvar + 1
-    for (auto pcl_ofs = pvar + 1; ClauseOfs(*pcl_ofs) != SENTINEL_CL; pcl_ofs++) {
+    for (auto pcl_ofs = pvar + 1; pcl_ofs->ofs() != SENTINEL_CL; pcl_ofs++) {
       // Type-safety problem. Is pcl_ofs a ClauseOfs or ClauseIndex?
-      ClauseIndex clID = getClauseID(ClauseOfs(*pcl_ofs));
+      ClauseIndex clID = getClauseID(pcl_ofs->ofs());
       if(archetype_.clause_unseen_in_sup_comp(clID)){
         auto itVEnd = search_stack_.end();
         bool all_lits_active = true;
-        for (auto itL = beginOfClause(ClauseOfs(*pcl_ofs)); *itL != SENTINEL_LIT; itL++) {
+        for (auto itL = beginOfClause(pcl_ofs->ofs()); *itL != SENTINEL_LIT; itL++) {
           assert(itL->var() <= max_variable_id_);
           if(archetype_.var_nil(itL->var())){
             assert(!isActive(*itL));
@@ -141,7 +141,7 @@ void STDComponentAnalyzer::recordComponentOf(const VariableIndex var) {
               search_stack_.pop_back();
             }
             archetype_.setClause_nil(clID);
-            for (auto itX = beginOfClause(ClauseOfs(*pcl_ofs)); itX != itL; itX++) {
+            for (auto itX = beginOfClause(pcl_ofs->ofs()); itX != itL; itX++) {
               if (var_frequency_scores_[itX->var()] > 0)
                 var_frequency_scores_[itX->var()]--;
             }

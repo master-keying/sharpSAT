@@ -13,6 +13,7 @@
 #include <vector>
 
 #include <sharpSAT/primitive_types.h>
+#include <sharpSAT/unions.h>
 
 namespace sharpSAT {
 
@@ -35,11 +36,11 @@ public:
     // the only time a varsSENTINEL is added should be in a
     // call to closeVariableData(..)
     assert(var != varsSENTINEL);
-    data_.push_back(static_cast<unsigned>(var));
+    data_.push_back(var);
   }
 
   void closeVariableData() {
-    data_.push_back(static_cast<unsigned>(varsSENTINEL));
+    data_.push_back(varsSENTINEL);
     clauses_ofs_ = data_.size();
   }
 
@@ -47,19 +48,19 @@ public:
     // the only time a clsSENTINEL is added should be in a
     // call to closeClauseData(..)
     assert(cl != clsSENTINEL);
-    data_.push_back(static_cast<unsigned>(cl));
+    data_.push_back(cl);
   }
 
   void closeClauseData() {
-    data_.push_back(static_cast<unsigned>(clsSENTINEL));
-    assert(*(clsBegin()-1) == 0);
+    data_.push_back(clsSENTINEL);
+    assert((clsBegin() - 1)->var() == varsSENTINEL);
   }
 
-  std::vector<unsigned>::const_iterator varsBegin() const {
+  std::vector<ClauseOrVariable>::const_iterator varsBegin() const {
     return data_.begin();
   }
 
-  std::vector<unsigned>::const_iterator clsBegin() const {
+  std::vector<ClauseOrVariable>::const_iterator clsBegin() const {
     return data_.begin() + clauses_ofs_;
   }
 
@@ -100,7 +101,7 @@ private:
   // variables SENTINEL clauses SENTINEL
   // this order has to be taken care of on filling
   // in the data!
-  std::vector<unsigned> data_;
+  std::vector<ClauseOrVariable> data_;
   unsigned clauses_ofs_ = 0;
   // id_ will identify denote the entry in the cacheable component database,
   // where a Packed version of this component is stored

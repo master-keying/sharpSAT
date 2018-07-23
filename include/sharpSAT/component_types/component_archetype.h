@@ -188,21 +188,21 @@ public:
     p_new_comp->reserveSpace(stack_size, super_comp().numLongClauses());
     current_comp_for_caching_.clear();
 
-    for (auto v_it = super_comp().varsBegin(); VariableIndex(*v_it) != varsSENTINEL;  v_it++)
-      if (var_seen(VariableIndex(*v_it))) { //we have to put a var into our component
-        p_new_comp->addVar(VariableIndex(*v_it));
-        current_comp_for_caching_.addVar(VariableIndex(*v_it));
-        setVar_in_other_comp(VariableIndex(*v_it));
+    for (auto v_it = super_comp().varsBegin(); v_it->var() != varsSENTINEL;  v_it++)
+      if (var_seen(v_it->var())) { //we have to put a var into our component
+        p_new_comp->addVar(v_it->var());
+        current_comp_for_caching_.addVar(v_it->var());
+        setVar_in_other_comp(v_it->var());
       }
     p_new_comp->closeVariableData();
     current_comp_for_caching_.closeVariableData();
 
-    for (auto it_cl = super_comp().clsBegin(); ClauseIndex(*it_cl) != clsSENTINEL; it_cl++)
-      if (clause_seen(ClauseIndex(*it_cl))) {
-        p_new_comp->addCl(ClauseIndex(*it_cl));
-           if(!clause_all_lits_active(ClauseIndex(*it_cl)))
-             current_comp_for_caching_.addCl(ClauseIndex(*it_cl));
-        setClause_in_other_comp(ClauseIndex(*it_cl));
+    for (auto it_cl = super_comp().clsBegin(); it_cl->cls() != clsSENTINEL; it_cl++)
+      if (clause_seen(it_cl->cls())) {
+        p_new_comp->addCl(it_cl->cls());
+           if(!clause_all_lits_active(it_cl->cls()))
+             current_comp_for_caching_.addCl(it_cl->cls());
+        setClause_in_other_comp(it_cl->cls());
       }
     p_new_comp->closeClauseData();
     current_comp_for_caching_.closeClauseData();

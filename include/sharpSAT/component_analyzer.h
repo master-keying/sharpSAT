@@ -71,14 +71,14 @@ public:
   void setupAnalysisContext(StackLevel &top, Component & super_comp){
      archetype_.reInitialize(top,super_comp);
 
-     for (auto vt = super_comp.varsBegin(); VariableIndex(*vt) != varsSENTINEL; vt++)
-       if (isActive(VariableIndex(*vt))) {
-         archetype_.setVar_in_sup_comp_unseen(VariableIndex(*vt));
-         var_frequency_scores_[VariableIndex(*vt)] = 0;
+     for (auto vt = super_comp.varsBegin(); vt->var() != varsSENTINEL; vt++)
+       if (isActive(vt->var())) {
+         archetype_.setVar_in_sup_comp_unseen(vt->var());
+         var_frequency_scores_[vt->var()] = 0;
        }
 
-     for (auto itCl = super_comp.clsBegin(); ClauseIndex(*itCl) != clsSENTINEL; itCl++)
-         archetype_.setClause_in_sup_comp_unseen(ClauseIndex(*itCl));
+     for (auto itCl = super_comp.clsBegin(); itCl->cls() != clsSENTINEL; itCl++)
+         archetype_.setClause_in_sup_comp_unseen(itCl->cls());
   }
 
   // returns true, iff the component found is non-trivial
@@ -112,10 +112,10 @@ public:
   }
 
   //begin DEBUG
-  void test_checkArchetypeRepForClause(std::vector<unsigned>::iterator pcl_ofs){
-      ClauseIndex clID = getClauseID(ClauseOfs(*pcl_ofs));
+  void test_checkArchetypeRepForClause(std::vector<ClauseOfsOrVariable>::iterator pcl_ofs){
+      ClauseIndex clID = getClauseID(pcl_ofs->ofs());
       bool all_a = true;
-      for (auto itL = beginOfClause(ClauseOfs(*pcl_ofs)); *itL != SENTINEL_LIT; itL++) {
+      for (auto itL = beginOfClause(pcl_ofs->ofs()); *itL != SENTINEL_LIT; itL++) {
         if(!isActive(*itL))
           all_a = false;
       }
@@ -145,7 +145,7 @@ private:
   // this should give better cache behaviour,
   // because all links of one variable (binary and nonbinray) are found
   // in one contiguous chunk of memory
-  std::vector<unsigned> unified_variable_links_lists_pool_;
+  std::vector<ClauseOfsOrVariable> unified_variable_links_lists_pool_;
 
   std::vector<ClauseOfs> map_clause_id_to_ofs_;
   VariableIndexedVector<unsigned> variable_link_list_offsets_;
@@ -177,20 +177,18 @@ private:
   }
 
   ClauseIndex getClauseID(ClauseOfs cl_ofs) {
-    return ClauseIndex(
-      reinterpret_cast<CAClauseHeader *>(
-        &literal_pool_[static_cast<unsigned>(cl_ofs)
-          - CAClauseHeader::overheadInLits() ]
-      )->clause_id
-    );
+    return ClauseIndex(reinterpret_cast<CAClauseHeader *>(&literal_pool_[
+      static_cast<unsigned>(cl_ofs) - CAClauseHeader::overheadInLits()
+    ])->clause_id);
   }
 
   CAClauseHeader &getHeaderOf(ClauseOfs cl_ofs) {
     return *reinterpret_cast<CAClauseHeader *>(&literal_pool_[
-      static_cast<unsigned>(cl_ofs) - CAClauseHeader::overheadInLits()]);
+      static_cast<unsigned>(cl_ofs) - CAClauseHeader::overheadInLits()
+    ]);
   }
 
-  std::vector<unsigned>::iterator beginOfLinkList(VariableIndex v) {
+  std::vector<ClauseOfsOrVariable>::iterator beginOfLinkList(VariableIndex v) {
     return unified_variable_links_lists_pool_.begin() + variable_link_list_offsets_[v];
   }
 

@@ -11,6 +11,7 @@
 
 
 #include <sharpSAT/containers.h>
+#include <sharpSAT/unions.h>
 #include <sharpSAT/stack.h>
 #include <sharpSAT/component_types/component.h>
 #include <sharpSAT/component_types/base_packed_component.h>
@@ -74,14 +75,14 @@ public:
   void setupAnalysisContext(StackLevel &top, Component & super_comp){
      archetype_.reInitialize(top,super_comp);
 
-     for (auto vt = super_comp.varsBegin(); VariableIndex(*vt) != varsSENTINEL; vt++)
-       if (isActive(VariableIndex(*vt))) {
-         archetype_.setVar_in_sup_comp_unseen(VariableIndex(*vt));
-         var_frequency_scores_[VariableIndex(*vt)] = 0;
+     for (auto vt = super_comp.varsBegin(); vt->var() != varsSENTINEL; vt++)
+       if (isActive(vt->var())) {
+         archetype_.setVar_in_sup_comp_unseen(vt->var());
+         var_frequency_scores_[vt->var()] = 0;
        }
 
-     for (auto itCl = super_comp.clsBegin(); ClauseIndex(*itCl) != clsSENTINEL; itCl++)
-         archetype_.setClause_in_sup_comp_unseen(ClauseIndex(*itCl));
+     for (auto itCl = super_comp.clsBegin(); itCl->cls() != clsSENTINEL; itCl++)
+         archetype_.setClause_in_sup_comp_unseen(itCl->cls());
   }
 
   // returns true, iff the component found is non-trivial
@@ -131,7 +132,7 @@ private:
   // this should give better cache behaviour,
   // because all links of one variable (binary and nonbinray) are found
   // in one contiguous chunk of memory
-  std::vector<unsigned> unified_variable_links_lists_pool_;
+  std::vector<ClauseOrLiteralOrVariable> unified_variable_links_lists_pool_;
 
 
   VariableIndexedVector<unsigned> variable_link_list_offsets_;
@@ -159,7 +160,7 @@ private:
     return literal_values_[LiteralID(v, true)] == TriValue::X_TRI;
   }
 
-  std::vector<unsigned>::iterator beginOfLinkList(VariableIndex v) {
+  typename std::vector<ClauseOrLiteralOrVariable>::iterator beginOfLinkList(VariableIndex v) {
     return unified_variable_links_lists_pool_.begin() + variable_link_list_offsets_[v];
   }
 
@@ -183,20 +184,19 @@ private:
 
 
   void searchClause(VariableIndex vt, ClauseIndex clID,
-      std::vector<unsigned>::iterator pstart_cls) {
+      std::vector<ClauseOrLiteralOrVariable>::iterator pstart_cls) {
 
     auto original_size = search_stack_.size();
     bool all_lits_active = true;
-    for (auto itL = pstart_cls; *itL != 0; itL++) {
-      LiteralID lit; lit.copyRaw(*itL);
+    for (auto itL = pstart_cls; static_cast<unsigned>(*itL) != 0; itL++) {
 
-      assert(lit.var() <= max_variable_id_);
-      if(!archetype_.var_nil(lit.var()))
-        manageSearchOccurrenceAndScoreOf(lit);
-      else {
-        assert(!isActive(lit));
+      assert(itL->lit().var() <= max_variable_id_);
+      if(!archetype_.var_nil(itL->lit().var())) {
+        manageSearchOccurrenceAndScoreOf(itL->lit());
+      } else {
+        assert(!isActive(itL->lit()));
         all_lits_active = false;
-        if (isResolved(lit))
+        if (isResolved(itL->lit()))
           continue;
         //BEGIN accidentally entered a satisfied clause: undo the search process
         while (search_stack_.size() != original_size) {
@@ -205,11 +205,14 @@ private:
           search_stack_.pop_back();
         }
         archetype_.setClause_nil(clID);
-        while(*itL != 0) {
-          LiteralID lit2;
-          lit2.copyRaw(*(--itL));
-          if(isActive(lit2))
-            var_frequency_scores_[lit2.var()]--;
+        while(static_cast<unsigned>(*itL) != 0) {
+          --itL;
+          // Type-safety violation!!!
+          // Sometimes *itL is not LiteralID.
+          // Yet we still force-cast it to LiteralID.
+          LiteralID lit(static_cast<unsigned>(*itL));
+          if(isActive(lit))
+            var_frequency_scores_[lit.var()]--;
         }
         //END accidentally entered a satisfied clause: undo the search process
         break;
