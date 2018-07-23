@@ -1,0 +1,4 @@
+{
+    // GIT diffs should be concise
+    "files.trimTrailingWhitespace": true
+}

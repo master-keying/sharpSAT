@@ -17,3 +17,8 @@
 ehthumbs.db
 Thumbs.db
 .idea
+
+# IDE configuration #
+#####################
+/.vscode
+/.vs
