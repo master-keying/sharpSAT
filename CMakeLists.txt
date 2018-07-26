@@ -84,9 +84,6 @@ if (WIN32)
     target_link_libraries(libsharpSAT PUBLIC "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/mpir.lib")
 endif()
 # The current code is a mess and abuses MSVC iterators in an invalid way
-if (MSVC)
-    target_compile_definitions(libsharpSAT PUBLIC _ITERATOR_DEBUG_LEVEL=0)
-endif()
 
 add_executable(sharpSAT src/main.cpp)
 target_link_libraries(sharpSAT libsharpSAT)
