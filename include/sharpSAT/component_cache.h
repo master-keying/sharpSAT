@@ -15,6 +15,7 @@
 #include <sharpSAT/component_types/component.h>
 #include <sharpSAT/component_types/cacheable_component.h>
 
+#include <cstddef>
 #include <gmpxx.h>
 
 namespace sharpSAT {

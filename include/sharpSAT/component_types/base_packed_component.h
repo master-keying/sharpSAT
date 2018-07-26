@@ -9,6 +9,7 @@
 #define SHARP_SAT_BASE_PACKED_COMPONENT_H_
 
 #include <assert.h>
+#include <cstddef>
 #include <gmpxx.h>
 
 namespace sharpSAT {

@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <vector>
 
+#include <cstddef>
 #include <gmpxx.h>
 
 namespace sharpSAT {

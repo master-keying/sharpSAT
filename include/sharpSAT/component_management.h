@@ -18,6 +18,7 @@
 #include <sharpSAT/component_types/component.h>
 
 #include <vector>
+#include <cstddef>
 #include <gmpxx.h>
 
 namespace sharpSAT {

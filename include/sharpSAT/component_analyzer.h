@@ -20,6 +20,7 @@
 
 #include <vector>
 #include <cmath>
+#include <cstddef>
 #include <gmpxx.h>
 
 namespace sharpSAT {
