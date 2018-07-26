@@ -181,7 +181,7 @@ private:
 
 
   void searchClause(VariableIndex vt, ClauseIndex clID, LiteralID * pstart_cls){
-    auto itVEnd = search_stack_.end();
+    auto original_size = search_stack_.size();
     bool all_lits_active = true;
     for (auto itL = pstart_cls; *itL != SENTINEL_LIT; itL++) {
       assert(itL->var() <= max_variable_id_);
@@ -193,7 +193,7 @@ private:
         if (isResolved(*itL))
           continue;
         //BEGIN accidentally entered a satisfied clause: undo the search process
-        while (search_stack_.end() != itVEnd) {
+        while (search_stack_.size() != original_size) {
           assert(search_stack_.back() <= max_variable_id_);
           archetype_.setVar_in_sup_comp_unseen(search_stack_.back());
           search_stack_.pop_back();
