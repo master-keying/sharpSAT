@@ -385,32 +385,34 @@ bool Solver::BCP(size_t start_at_stack_ofs) {
 			setLiteralIfFree(*bt, Antecedent(unLit));
 		}
 		//END Propagate Bin Clauses
-		for (auto itcl = literal(unLit).watch_list_.rbegin();
-				*itcl != SENTINEL_CL; itcl++) {
-			bool isLitA = (*beginOf(*itcl) == unLit);
-			auto p_watchLit = beginOf(*itcl) + 1 - isLitA;
-			auto p_otherLit = beginOf(*itcl) + isLitA;
+        auto& unLit_watch_list = literal(unLit).watch_list_;
 
-			if (isSatisfied(*p_otherLit))
-				continue;
-			auto itL = beginOf(*itcl) + 2;
+        for (auto itcl = unLit_watch_list.size() - 1;
+             unLit_watch_list[itcl] != SENTINEL_CL; --itcl) {
+			bool isLitA = (*beginOf(unLit_watch_list[itcl]) == unLit);
+			auto p_watchLit = beginOf(unLit_watch_list[itcl]) + 1 - isLitA;
+			auto p_otherLit = beginOf(unLit_watch_list[itcl]) + isLitA;
+
+            if (isSatisfied(*p_otherLit))
+                continue;
+			auto itL = beginOf(unLit_watch_list[itcl]) + 2;
 			while (isResolved(*itL))
 				itL++;
 			// either we found a free or satisfied lit
 			if (*itL != SENTINEL_LIT) {
-				literal(*itL).addWatchLinkTo(*itcl);
+				literal(*itL).addWatchLinkTo(unLit_watch_list[itcl]);
 				swap(*itL, *p_watchLit);
-				*itcl = literal(unLit).watch_list_.back();
-				literal(unLit).watch_list_.pop_back();
+				unLit_watch_list[itcl] = unLit_watch_list.back();
+				unLit_watch_list.pop_back();
 			} else {
 				// or p_unLit stays resolved
 				// and we have hence no free literal left
 				// for p_otherLit remain poss: Active or Resolved
-				if (setLiteralIfFree(*p_otherLit, Antecedent(*itcl))) { // implication
+				if (setLiteralIfFree(*p_otherLit, Antecedent(unLit_watch_list[itcl]))) { // implication
 					if (isLitA)
 						swap(*p_otherLit, *p_watchLit);
 				} else {
-					setConflictState(*itcl);
+					setConflictState(unLit_watch_list[itcl]);
 					return false;
 				}
 			}
