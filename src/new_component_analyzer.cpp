@@ -43,7 +43,7 @@ void NewComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
         break;
       }
 
-      max_clause_id_++;
+      ++max_clause_id_;
       literal_pool_.push_back(SENTINEL_LIT);
       for (unsigned i = 0; i < CAClauseHeader::overheadInLits(); i++)
         literal_pool_.push_back(LiteralID(0));
@@ -74,7 +74,7 @@ void NewComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
   unified_variable_links_lists_pool_.push_back(0u);
   unified_variable_links_lists_pool_.push_back(0u);
 
-  for (VariableIndex v(1); v < VariableIndex(occs_.size()); v++) {
+  for (VariableIndex v(1); v < VariableIndex(occs_.size()); ++v) {
     variable_link_list_offsets_[v] = unified_variable_links_lists_pool_.size();
     for (auto l : literals[LiteralID(v, false)].binary_links_)
       if (l != SENTINEL_LIT) {

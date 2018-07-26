@@ -121,13 +121,13 @@ void Instance::compactVariables() {
     _tmp_bin_links.push_back(l.binary_links_);
 
   assert(_tmp_bin_links.size() == literals_.size());
-  for (VariableIndex v(1); v < VariableIndex(variables_.size()); v++)
+  for (VariableIndex v(1); v < VariableIndex(variables_.size()); ++v)
     if (isActive(LiteralID(v, true))) {
       if (isolated(v)) {
         num_isolated++;
         continue;
       }
-      last_ofs++;
+      ++last_ofs;
       var_map[v] = last_ofs;
     }
 

@@ -40,7 +40,7 @@ void AltComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
       if (it_lit + 1 == lit_pool.end())
         break;
 
-      max_clause_id_++;
+      ++max_clause_id_;
       it_lit += ClauseHeader::overheadInLits();
       it_curr_cl_st = it_lit + 1;
       curr_clause_length = 0;
@@ -83,7 +83,7 @@ void AltComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
   unified_variable_links_lists_pool_.push_back(0u);
   unified_variable_links_lists_pool_.push_back(0u);
 
-  for (VariableIndex v(1); v < VariableIndex(occs.size()); v++) {
+  for (VariableIndex v(1); v < VariableIndex(occs.size()); ++v) {
     // BEGIN data for binary clauses
     variable_link_list_offsets_[v] = unified_variable_links_lists_pool_.size();
     for (auto l : literals[LiteralID(v, false)].binary_links_)

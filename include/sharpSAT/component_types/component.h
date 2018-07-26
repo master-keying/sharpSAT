@@ -81,11 +81,11 @@ public:
   void createAsDummyComponent(VariableIndex max_var_id, ClauseIndex max_clause_id) {
     data_.clear();
     clauses_ofs_ = 1;
-    for (VariableIndex idvar(1); idvar <= max_var_id; idvar++)
+    for (VariableIndex idvar(1); idvar <= max_var_id; ++idvar)
       addVar(idvar);
     closeVariableData();
     if (max_clause_id != clsSENTINEL)
-      for (ClauseIndex idcl(1); idcl <= max_clause_id; idcl++)
+      for (ClauseIndex idcl(1); idcl <= max_clause_id; ++idcl)
         addCl(idcl);
     closeClauseData();
   }

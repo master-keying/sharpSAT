@@ -50,7 +50,7 @@ bool Solver::prepFailedLiteralTest() {
 	unsigned last_size;
 	do {
 		last_size = literal_stack_.size();
-		for (VariableIndex v(1); v < VariableIndex(variables_.size()); v++)
+		for (VariableIndex v(1); v < VariableIndex(variables_.size()); ++v)
 		    if (isActive(LiteralID(v, true))) {
 				unsigned sz = literal_stack_.size();
 				setLiteralIfFree(LiteralID(v, true));
