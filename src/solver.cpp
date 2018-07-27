@@ -488,8 +488,9 @@ bool Solver::BCP(size_t start_at_stack_ofs) {
 // this is IBCP 30.08
 bool Solver::implicitBCP() {
 	static vector<LiteralID> test_lits(num_variables());
-	static LiteralIndexedVector<unsigned char> viewed_lits(num_variables() + 1,
-			0);
+	static LiteralIndexedVector<unsigned char> viewed_lits(num_variables() + 1, 0);
+    test_lits.resize(num_variables());
+    viewed_lits.resize(num_variables() + 1);
 
 	unsigned stack_ofs = stack_.top().literal_stack_ofs();
 	unsigned num_curr_lits = 0;
