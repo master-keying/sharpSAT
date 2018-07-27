@@ -75,14 +75,14 @@ public:
   void setupAnalysisContext(StackLevel &top, Component & super_comp){
      archetype_.reInitialize(top,super_comp);
 
-     for (auto vt = super_comp.varsBegin(); vt->var() != varsSENTINEL; vt++)
-       if (isActive(vt->var())) {
-         archetype_.setVar_in_sup_comp_unseen(vt->var());
-         var_frequency_scores_[vt->var()] = 0;
+     for (auto vt = super_comp.varsBegin(); vt->get<VariableIndex>() != varsSENTINEL; vt++)
+       if (isActive(vt->get<VariableIndex>())) {
+         archetype_.setVar_in_sup_comp_unseen(vt->get<VariableIndex>());
+         var_frequency_scores_[vt->get<VariableIndex>()] = 0;
        }
 
-     for (auto itCl = super_comp.clsBegin(); itCl->cls() != clsSENTINEL; itCl++)
-         archetype_.setClause_in_sup_comp_unseen(itCl->cls());
+     for (auto itCl = super_comp.clsBegin(); itCl->get<ClauseIndex>() != clsSENTINEL; itCl++)
+         archetype_.setClause_in_sup_comp_unseen(itCl->get<ClauseIndex>());
   }
 
   // returns true, iff the component found is non-trivial
@@ -132,7 +132,7 @@ private:
   // this should give better cache behaviour,
   // because all links of one variable (binary and nonbinray) are found
   // in one contiguous chunk of memory
-  std::vector<ClauseOrLiteralOrVariable> unified_variable_links_lists_pool_;
+  std::vector<Variant<ClauseIndex,LiteralID,VariableIndex,unsigned>> unified_variable_links_lists_pool_;
 
 
   VariableIndexedVector<unsigned> variable_link_list_offsets_;
@@ -160,7 +160,7 @@ private:
     return literal_values_[LiteralID(v, true)] == TriValue::X_TRI;
   }
 
-  typename std::vector<ClauseOrLiteralOrVariable>::iterator beginOfLinkList(VariableIndex v) {
+  typename std::vector<Variant<ClauseIndex,LiteralID,VariableIndex,unsigned>>::iterator beginOfLinkList(VariableIndex v) {
     return unified_variable_links_lists_pool_.begin() + variable_link_list_offsets_[v];
   }
 
@@ -184,19 +184,19 @@ private:
 
 
   void searchClause(VariableIndex vt, ClauseIndex clID,
-      std::vector<ClauseOrLiteralOrVariable>::iterator pstart_cls) {
+      std::vector<Variant<ClauseIndex,LiteralID,VariableIndex,unsigned>>::iterator pstart_cls) {
 
     auto original_size = search_stack_.size();
     bool all_lits_active = true;
     for (auto itL = pstart_cls; static_cast<unsigned>(*itL) != 0; itL++) {
 
-      assert(itL->lit().var() <= max_variable_id_);
-      if(!archetype_.var_nil(itL->lit().var())) {
-        manageSearchOccurrenceAndScoreOf(itL->lit());
+      assert(itL->get<LiteralID>().var() <= max_variable_id_);
+      if(!archetype_.var_nil(itL->get<LiteralID>().var())) {
+        manageSearchOccurrenceAndScoreOf(itL->get<LiteralID>());
       } else {
-        assert(!isActive(itL->lit()));
+        assert(!isActive(itL->get<LiteralID>()));
         all_lits_active = false;
-        if (isResolved(itL->lit()))
+        if (isResolved(itL->get<LiteralID>()))
           continue;
         //BEGIN accidentally entered a satisfied clause: undo the search process
         while (search_stack_.size() != original_size) {
@@ -231,8 +231,8 @@ private:
 //      bool all_lits_active = true;
 //      // LiteralID * pstart_cls = reinterpret_cast<LiteralID *>(p + 1 + *(p+1));
 //      for (auto itL = pstart_cls; itL != pstart_cls+2; itL++) {
-//        assert(itL->var() <= max_variable_id_);
-//        if(archetype_.var_nil(itL->var())){
+//        assert(itL->get<VariableIndex>() <= max_variable_id_);
+//        if(archetype_.var_nil(itL->get<VariableIndex>())){
 //          assert(!isActive(*itL));
 //          all_lits_active = false;
 //          if (isResolved(*itL))
@@ -246,14 +246,14 @@ private:
 //          archetype_.setClause_nil(clID);
 //          while(itL != pstart_cls - 1)
 //            if(isActive(*(--itL)))
-//              var_frequency_scores_[itL->var()]--;
+//              var_frequency_scores_[itL->get<VariableIndex>()]--;
 //          //END accidentally entered a satisfied clause: undo the search process
 //          break;
 //        } else {
 //          assert(isActive(*itL));
-//          var_frequency_scores_[itL->var()]++;
-//          if(isUnseenAndActive(itL->var()))
-//            setSeenAndStoreInSearchStack(itL->var());
+//          var_frequency_scores_[itL->get<VariableIndex>()]++;
+//          if(isUnseenAndActive(itL->get<VariableIndex>()))
+//            setSeenAndStoreInSearchStack(itL->get<VariableIndex>());
 //        }
 //      }
 //

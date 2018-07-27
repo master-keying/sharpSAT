@@ -71,14 +71,14 @@ public:
   void setupAnalysisContext(StackLevel &top, Component & super_comp){
      archetype_.reInitialize(top,super_comp);
 
-     for (auto vt = super_comp.varsBegin(); vt->var() != varsSENTINEL; vt++)
-       if (isActive(vt->var())) {
-         archetype_.setVar_in_sup_comp_unseen(vt->var());
-         var_frequency_scores_[vt->var()] = 0;
+     for (auto vt = super_comp.varsBegin(); vt->get<VariableIndex>() != varsSENTINEL; vt++)
+       if (isActive(vt->get<VariableIndex>())) {
+         archetype_.setVar_in_sup_comp_unseen(vt->get<VariableIndex>());
+         var_frequency_scores_[vt->get<VariableIndex>()] = 0;
        }
 
-     for (auto itCl = super_comp.clsBegin(); itCl->cls() != clsSENTINEL; itCl++)
-         archetype_.setClause_in_sup_comp_unseen(itCl->cls());
+     for (auto itCl = super_comp.clsBegin(); itCl->get<ClauseIndex>() != clsSENTINEL; itCl++)
+         archetype_.setClause_in_sup_comp_unseen(itCl->get<ClauseIndex>());
   }
 
   // returns true, iff the component found is non-trivial
@@ -145,7 +145,7 @@ private:
   // this should give better cache behaviour,
   // because all links of one variable (binary and nonbinray) are found
   // in one contiguous chunk of memory
-  std::vector<ClauseOrLiteralOrVariable> unified_variable_links_lists_pool_;
+  std::vector<Variant<ClauseIndex,LiteralID,VariableIndex,unsigned>> unified_variable_links_lists_pool_;
 
   std::vector<ClauseOfs> map_clause_id_to_ofs_;
   VariableIndexedVector<unsigned> variable_link_list_offsets_;
@@ -189,7 +189,7 @@ private:
       static_cast<unsigned>(cl_ofs) - CAClauseHeader::overheadInLits()]);
   }
 
-  std::vector<ClauseOrLiteralOrVariable>::iterator beginOfLinkList(VariableIndex v) {
+  std::vector<Variant<ClauseIndex,LiteralID,VariableIndex,unsigned>>::iterator beginOfLinkList(VariableIndex v) {
     return unified_variable_links_lists_pool_.begin() + variable_link_list_offsets_[v];
   }
 
@@ -204,7 +204,7 @@ private:
   // after execution component_search_stack.size()==1
   void recordComponentOf(const VariableIndex var);
 
-  void pushLitsInto(std::vector<ClauseOrLiteral> &target,
+  void pushLitsInto(std::vector<Variant<ClauseIndex,LiteralID>> &target,
 		       const std::vector<LiteralID> &lit_pool,
 		       unsigned start_of_cl,
 		       LiteralID & omitLit){

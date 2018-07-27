@@ -163,56 +163,5 @@ template<class... Ts>
 using Variant = ReleaseVariant<Ts...>;
 #endif
 
-
-
-struct ClauseOrVariable {
-  ClauseOrVariable(ClauseIndex cls) : v_(cls) {}
-  ClauseOrVariable(VariableIndex var) : v_(var) {}
-  ClauseIndex cls() const { return v_.get<ClauseIndex>(); }
-  VariableIndex var() const { return v_.get<VariableIndex>(); }
-  explicit operator unsigned() const { return static_cast<unsigned>(v_); }
-private:
-  Variant<ClauseIndex,VariableIndex> v_;
-}; // ClauseOrVariable
-
-struct ClauseOrLiteral {
-  ClauseOrLiteral(ClauseIndex cls) : v_(cls) {}
-  ClauseOrLiteral(LiteralID lit) : v_(lit) {}
-  ClauseIndex cls() const { return v_.get<ClauseIndex>(); }
-  LiteralID lit() const { return v_.get<LiteralID>(); }
-private:
-  Variant<ClauseIndex,LiteralID> v_;
-  friend class ClauseOrLiteralOrVariable;
-}; // ClauseOrVariable
-
-struct ClauseOrLiteralOrVariable {
-  ClauseOrLiteralOrVariable(ClauseIndex cls) : v_(cls) {}
-  ClauseOrLiteralOrVariable(LiteralID lit) : v_(lit) {}
-  ClauseOrLiteralOrVariable(VariableIndex var) : v_(var) {}
-  ClauseOrLiteralOrVariable(unsigned i) : v_(i) {}
-
-  //! Construct from \ref ClauseOrLiteral
-  ClauseOrLiteralOrVariable(const ClauseOrLiteral& col) : v_(col.v_) {}
-
-  explicit operator unsigned() const { return static_cast<unsigned>(v_); }
-  ClauseIndex cls() const { return v_.get<ClauseIndex>(); }
-  LiteralID lit() const { return v_.get<LiteralID>(); }
-  VariableIndex var() const { return v_.get<VariableIndex>(); }
-private:
-  Variant<ClauseIndex,LiteralID,VariableIndex,unsigned> v_;
-}; // ClauseOrLiteralOrVariable
-
-struct ClauseOfsOrVariable {
-  ClauseOfsOrVariable(unsigned i) : v_(i) {}
-  ClauseOfsOrVariable(ClauseOfs ofs) : v_(ofs) {}
-  ClauseOfsOrVariable(VariableIndex var) : v_(var) {}
-  ClauseOfs ofs() const { return v_.get<ClauseOfs>(); }
-  VariableIndex var() const { return v_.get<VariableIndex>(); }
-  explicit operator unsigned() const { return static_cast<unsigned>(v_); }
-
-private:
-  Variant<unsigned,ClauseOfs,VariableIndex> v_;
-}; // ClauseOfsOrVariable
-
 } // sharpSAT namespace
 #endif // SHARP_SAT_UNIONS_H_

@@ -53,14 +53,16 @@ public:
 
   void closeClauseData() {
     data_.push_back(clsSENTINEL);
-    assert((clsBegin() - 1)->var() == varsSENTINEL);
+    assert((clsBegin() - 1)->get<VariableIndex>() == varsSENTINEL);
   }
 
-  std::vector<ClauseOrVariable>::const_iterator varsBegin() const {
+  std::vector<Variant<ClauseIndex,VariableIndex>>::const_iterator
+  varsBegin() const {
     return data_.begin();
   }
 
-  std::vector<ClauseOrVariable>::const_iterator clsBegin() const {
+  std::vector<Variant<ClauseIndex,VariableIndex>>::const_iterator
+  clsBegin() const {
     return data_.begin() + clauses_ofs_;
   }
 
@@ -101,7 +103,7 @@ private:
   // variables SENTINEL clauses SENTINEL
   // this order has to be taken care of on filling
   // in the data!
-  std::vector<ClauseOrVariable> data_;
+  std::vector<Variant<ClauseIndex,VariableIndex>> data_;
   unsigned clauses_ofs_ = 0;
   // id_ will identify denote the entry in the cacheable component database,
   // where a Packed version of this component is stored

@@ -26,8 +26,8 @@ void AltComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
   variable_link_list_offsets_.resize(max_variable_id + 1, 0);
 
   VariableIndexedVector<vector<ClauseIndex>> occs(max_variable_id + 1);
-  VariableIndexedVector<vector<ClauseOrLiteral>> occ_long_clauses(max_variable_id + 1);
-  VariableIndexedVector<vector<ClauseOrLiteral>> occ_ternary_clauses(max_variable_id + 1);
+  VariableIndexedVector<vector<Variant<ClauseIndex,LiteralID>>> occ_long_clauses(max_variable_id + 1);
+  VariableIndexedVector<vector<Variant<ClauseIndex,LiteralID>>> occ_ternary_clauses(max_variable_id + 1);
 
   vector<LiteralID> tmp;
   max_clause_id_ = ClauseIndex(0);
@@ -80,8 +80,8 @@ void AltComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
   ComponentArchetype::initArrays(max_variable_id_, max_clause_id_);
   // the unified link list
   unified_variable_links_lists_pool_.clear();
-  unified_variable_links_lists_pool_.push_back(0); // never accessed
-  unified_variable_links_lists_pool_.push_back(0); // never accessed
+  unified_variable_links_lists_pool_.push_back(0u);
+  unified_variable_links_lists_pool_.push_back(0u);
 
   for (VariableIndex v(1); v < VariableIndex(occs.size()); v++) {
     // BEGIN data for binary clauses
@@ -105,7 +105,7 @@ void AltComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
     // This can't be typed using ClauseOrVariableOrLiteral,
     // because the previous items are either Clause or a Literal
     // (not 1 concrete type).
-    unified_variable_links_lists_pool_.push_back(0);
+    unified_variable_links_lists_pool_.push_back(0u);
 
     // BEGIN data for long clauses
     for(auto it = occs[v].begin(); it != occs[v].end(); it+=2){
@@ -174,34 +174,34 @@ void AltComponentAnalyzer::recordComponentOf(const VariableIndex var) {
     //BEGIN traverse binary clauses
     assert(isActive(*vt));
     auto p = beginOfLinkList(*vt);
-    for (; p->var() != varsSENTINEL; p++) {
-      if(manageSearchOccurrenceOf(LiteralID(p->var(),true))){
-        var_frequency_scores_[p->var()]++;
+    for (; p->get<VariableIndex>() != varsSENTINEL; p++) {
+      if(manageSearchOccurrenceOf(LiteralID(p->get<VariableIndex>(),true))){
+        var_frequency_scores_[p->get<VariableIndex>()]++;
         var_frequency_scores_[*vt]++;
       }
     }
     //END traverse binary clauses
 
     for ( p++; static_cast<unsigned>(*p) ; p+=3) {
-      if(archetype_.clause_unseen_in_sup_comp(p->cls())) {
-        LiteralID litA = (p + 1)->lit();
-        LiteralID litB = (p + 2)->lit();
+      if(archetype_.clause_unseen_in_sup_comp(p->get<ClauseIndex>())) {
+        LiteralID litA = (p + 1)->get<LiteralID>();
+        LiteralID litB = (p + 2)->get<LiteralID>();
         if(isSatisfied(litA)|| isSatisfied(litB))
-          archetype_.setClause_nil(p->cls());
+          archetype_.setClause_nil(p->get<ClauseIndex>());
         else {
           var_frequency_scores_[*vt]++;
           manageSearchOccurrenceAndScoreOf(litA);
           manageSearchOccurrenceAndScoreOf(litB);
-          archetype_.setClause_seen(p->cls(),
+          archetype_.setClause_seen(p->get<ClauseIndex>(),
               isActive(litA) & isActive(litB));
         }
       }
     }
     //END traverse ternary clauses
 
-    for (p++; p->cls() != clsSENTINEL; p +=2)
-      if(archetype_.clause_unseen_in_sup_comp(p->cls()))
-        searchClause(*vt, p->cls(), p + 1 + static_cast<unsigned>((p+1)->cls()));
+    for (p++; p->get<ClauseIndex>() != clsSENTINEL; p +=2)
+      if(archetype_.clause_unseen_in_sup_comp(p->get<ClauseIndex>()))
+        searchClause(*vt, p->get<ClauseIndex>(), p + 1 + static_cast<unsigned>((p+1)->get<ClauseIndex>()));
   }
 }
 

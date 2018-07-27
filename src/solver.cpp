@@ -216,11 +216,11 @@ void Solver::decideLiteral() {
 	VariableIndex max_score_var(0);
 	for (auto it =
 			comp_manager_.superComponentOf(stack_.top()).varsBegin();
-			it->var() != varsSENTINEL; it++) {
-		score = scoreOf(it->var());
+			it->get<VariableIndex>() != varsSENTINEL; it++) {
+		score = scoreOf(it->get<VariableIndex>());
 		if (score > max_score) {
 			max_score = score;
-			max_score_var = it->var();
+			max_score_var = it->get<VariableIndex>();
 		}
 	}
 	// this assert should always hold,

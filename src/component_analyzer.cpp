@@ -66,8 +66,8 @@ void STDComponentAnalyzer::initialize(LiteralIndexedVector<Literal> & literals,
   ComponentArchetype::initArrays(max_variable_id_, max_clause_id_);
   // the unified link list
   unified_variable_links_lists_pool_.clear();
-  unified_variable_links_lists_pool_.push_back(0);
-  unified_variable_links_lists_pool_.push_back(0);
+  unified_variable_links_lists_pool_.push_back(0u);
+  unified_variable_links_lists_pool_.push_back(0u);
 
   for (VariableIndex v(1); v < VariableIndex(occs_.size()); v++) {
     variable_link_list_offsets_[v] = unified_variable_links_lists_pool_.size();
@@ -109,10 +109,10 @@ void STDComponentAnalyzer::recordComponentOf(const VariableIndex var) {
     //BEGIN traverse binary clauses
     assert(isActive(*vt));
     auto pvar = beginOfLinkList(*vt);
-    for (; pvar->var() != varsSENTINEL; pvar++) {
-      if(isUnseenAndActive(pvar->var())) {
-        setSeenAndStoreInSearchStack(pvar->var());
-        var_frequency_scores_[pvar->var()]++;
+    for (; pvar->get<VariableIndex>() != varsSENTINEL; pvar++) {
+      if(isUnseenAndActive(pvar->get<VariableIndex>())) {
+        setSeenAndStoreInSearchStack(pvar->get<VariableIndex>());
+        var_frequency_scores_[pvar->get<VariableIndex>()]++;
         var_frequency_scores_[*vt]++;
       }
     }
@@ -121,13 +121,13 @@ void STDComponentAnalyzer::recordComponentOf(const VariableIndex var) {
     // start traversing links to long clauses
     // not that that list starts right after the 0 termination of the prvious list
     // hence  pcl_ofs = pvar + 1
-    for (auto pcl_ofs = pvar + 1; pcl_ofs->ofs() != SENTINEL_CL; pcl_ofs++) {
+    for (auto pcl_ofs = pvar + 1; pcl_ofs->get<ClauseOfs>() != SENTINEL_CL; pcl_ofs++) {
       // Type-safety problem. Is pcl_ofs a ClauseOfs or ClauseIndex?
-      ClauseIndex clID = getClauseID(pcl_ofs->ofs());
+      ClauseIndex clID = getClauseID(pcl_ofs->get<ClauseOfs>());
       if(archetype_.clause_unseen_in_sup_comp(clID)){
         auto itVEnd = search_stack_.end();
         bool all_lits_active = true;
-        for (auto itL = beginOfClause(pcl_ofs->ofs()); *itL != SENTINEL_LIT; itL++) {
+        for (auto itL = beginOfClause(pcl_ofs->get<ClauseOfs>()); *itL != SENTINEL_LIT; itL++) {
           assert(itL->var() <= max_variable_id_);
           if(archetype_.var_nil(itL->var())){
             assert(!isActive(*itL));
@@ -141,7 +141,7 @@ void STDComponentAnalyzer::recordComponentOf(const VariableIndex var) {
               search_stack_.pop_back();
             }
             archetype_.setClause_nil(clID);
-            for (auto itX = beginOfClause(pcl_ofs->ofs()); itX != itL; itX++) {
+            for (auto itX = beginOfClause(pcl_ofs->get<ClauseOfs>()); itX != itL; itX++) {
               if (var_frequency_scores_[itX->var()] > 0)
                 var_frequency_scores_[itX->var()]--;
             }
