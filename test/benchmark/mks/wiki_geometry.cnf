@@ -1,0 +1,17 @@
+p cnf 6 13
+c position 0 has variables 1..2
+c position 1 has variables 3..4
+c position 2 has variables 5..6
+2 1 0
+-2 -1 0
+4 3 0
+-4 -3 0
+6 5 0
+-6 -5 0
+-1 -6 0
+-4 -6 0
+3 0
+-5 -3 -1 0
+5 3 0
+5 1 0
+3 1 0
