@@ -74,6 +74,8 @@ private:
 
 
 DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
+  assert(rComp.varsBegin()->get<VariableIndex>() != varsSENTINEL
+    && "There are no variables in the component. That may be an issue.");
 
   unsigned max_var_diff = 0;
   unsigned hashkey_vars = static_cast<unsigned>(*rComp.varsBegin());
@@ -127,7 +129,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
   bs.stuff(data_size, bits_of_data_size());
   bs.stuff(rComp.num_variables(), bits_per_variable());
   bs.stuff(bits_per_var_diff, 5);
-  bs.stuff(static_cast<unsigned>(*rComp.varsBegin()), bits_per_variable());
+  bs.stuff(static_cast<unsigned>(rComp.varsBegin()->get<VariableIndex>()), bits_per_variable());
 
   if(bits_per_var_diff)
   for (auto it = rComp.varsBegin() + 1; it->get<VariableIndex>() != varsSENTINEL; it++) {
