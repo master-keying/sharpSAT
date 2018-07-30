@@ -74,18 +74,20 @@ private:
 
 
 DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
-  assert(rComp.varsBegin()->get<VariableIndex>() != varsSENTINEL
-    && "There are no variables in the component. That may be an issue.");
+  //assert(rComp.varsBegin()->get<VariableIndex>() != varsSENTINEL
+  //  && "There are no variables in the component. That may be an issue.");
 
   unsigned max_var_diff = 0;
   unsigned hashkey_vars = static_cast<unsigned>(*rComp.varsBegin());
-  for (auto it = rComp.varsBegin() + 1; it->get<VariableIndex>() != varsSENTINEL; it++) {
-    auto star_it = static_cast<unsigned>(it->get<VariableIndex>());
-    auto star_it_minus_one = static_cast<unsigned>((it - 1)->get<VariableIndex>());
+  if (rComp.varsBegin()->get<VariableIndex>() != varsSENTINEL) {
+    for (auto it = rComp.varsBegin() + 1; it->get<VariableIndex>() != varsSENTINEL; it++) {
+      auto star_it = static_cast<unsigned>(it->get<VariableIndex>());
+      auto star_it_minus_one = static_cast<unsigned>((it - 1)->get<VariableIndex>());
 
-    hashkey_vars = (hashkey_vars * 3) + star_it;
-    if ((star_it - star_it_minus_one) - 1 > max_var_diff)
-      max_var_diff = (star_it - star_it_minus_one) - 1;
+      hashkey_vars = (hashkey_vars * 3) + star_it;
+      if ((star_it - star_it_minus_one) - 1 > max_var_diff)
+        max_var_diff = (star_it - star_it_minus_one) - 1;
+    }
   }
 
   unsigned hashkey_clauses = static_cast<unsigned>(*rComp.clsBegin());
@@ -123,7 +125,7 @@ DifferencePackedComponent::DifferencePackedComponent(Component &rComp) {
 
   data_ = new unsigned[data_size];
 
-  assert((data_size >> bits_of_data_size()) == 0);
+  // assert((data_size >> bits_of_data_size()) == 0);
   BitStuffer<unsigned> bs(data_);
 
   bs.stuff(data_size, bits_of_data_size());
