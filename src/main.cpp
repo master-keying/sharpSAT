@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
         cout << " wrong parameters" << endl;
         return -1;
       }
-      theSolver.config().time_bound_seconds = atol(argv[i + 1]);
+      theSolver.setTimeBound(atol(argv[i + 1]));
       if (theSolver.config().verbose)
         cout << "time bound set to " << theSolver.config().time_bound_seconds << "s\n";
      } else if (strcmp(argv[i], "-cs") == 0) {

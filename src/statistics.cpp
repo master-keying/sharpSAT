@@ -15,7 +15,16 @@ using namespace std;
 namespace sharpSAT {
 
 void DataAndStatistics::print_final_solution_count() {
-  cout << final_solution_count_.get_str();
+
+  if (exit_state_ == SOLVER_StateT::SUCCESS) {
+      cout << final_solution_count_.get_str();
+
+  } else if (exit_state_ == SOLVER_StateT::TIMEOUT) {
+      cout << "TIMEOUT";
+
+  } else {
+      cout << "UNKNOWN RESULT";
+  }
 }
 
 void DataAndStatistics::writeToFile(const string & file_name) {

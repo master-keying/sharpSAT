@@ -51,6 +51,7 @@ public:
 	        return statistics_;
 	}
 	void setTimeBound(long int i) {
+		config().time_bound_seconds = i;
 		stopwatch_.setTimeBound(i);
 	}
 
