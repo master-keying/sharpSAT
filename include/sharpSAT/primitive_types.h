@@ -189,7 +189,7 @@ typedef unsigned CacheEntryID;
 
 enum class SOLVER_StateT {
 
-  NO_STATE, SUCCESS, TIMEOUT, ABORTED
+  NO_STATE, SUCCESS, TIMEOUT
 };
 } // sharpSAT namespace
 #endif /* PRIMITIVE_TYPES_H_ */
