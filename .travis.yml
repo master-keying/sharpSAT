@@ -10,41 +10,16 @@ matrix:
   include:
     - os: linux
       compiler: clang
-      env:
-        - COMPILER='clang++'
-        - BUILD_TYPE=Debug
+      env: COMPILER='clang++'
 
     - os: linux
       compiler: gcc
-      env:
-        - COMPILER='g++'
-        - BUILD_TYPE=Debug
+      env: COMPILER='g++'
 
     - os: osx
       osx_image: xcode9.1
       compiler: clang
-      env:
-        - COMPILER='clang++'
-        - BUILD_TYPE=Debug
-
-    - os: linux
-      compiler: clang
-      env:
-        - COMPILER='clang++'
-        - BUILD_TYPE=Release
-
-    - os: linux
-      compiler: gcc
-      env:
-        - COMPILER='g++'
-        - BUILD_TYPE=Release
-
-    - os: osx
-      osx_image: xcode9.1
-      compiler: clang
-      env:
-        - COMPILER='clang++'
-        - BUILD_TYPE=Release
+      env: COMPILER='clang++'
 
 install:
   - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
@@ -64,7 +39,13 @@ before_script:
   - cd ${TRAVIS_BUILD_DIR}
 
 script:
-  - cmake -H. -BBuild-${BUILD_TYPE} -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
-  - cd Build-${BUILD_TYPE}
+  - cmake -H. -BBuild-Release -DCMAKE_BUILD_TYPE=Release
+  - cd Build-Release
   - make -j 2
   - CTEST_OUTPUT_ON_FAILURE=1 ctest -j 2
+  - cd ..
+  - cmake -H. -BBuild-Debug -DCMAKE_BUILD_TYPE=Debug
+  - cd Build-Debug
+  - make -j 2
+  - CTEST_OUTPUT_ON_FAILURE=1 ctest -j 2
+  - cd ..

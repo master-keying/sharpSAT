@@ -121,22 +121,31 @@ include(CTest)
 
 if (SHARPSAT_BUILD_TESTING AND BUILD_TESTING)
 
+    # Test the timeout CLI option
+    add_test(NAME integration:cli-timeout
+        COMMAND sharpSAT -t 1 "test/benchmark/pmc/circuit/3bitadd_32.cnf"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} )
+    set_tests_properties(integration:cli-timeout PROPERTIES
+        PASS_REGULAR_EXPRESSION "^TIMEOUT\n$" )
+    set_tests_properties(integration:cli-timeout PROPERTIES
+        TIMEOUT 3 ) # 3s test timeout, sharpSAT should end in 1s
+
     # Read all easy instances from a file
     file(READ "${PROJECT_SOURCE_DIR}/test/benchmark/easy.txt" SHARPSAT_AUTORUN_TESTS)
     string(REGEX REPLACE ";" "\\\\;" SHARPSAT_AUTORUN_TESTS "${SHARPSAT_AUTORUN_TESTS}")
     string(REGEX REPLACE "\n" ";" SHARPSAT_AUTORUN_TESTS "${SHARPSAT_AUTORUN_TESTS}")
-    
+
     # Add 1 test for each easy instance
     foreach(AUTORUN_TEST ${SHARPSAT_AUTORUN_TESTS})
-        add_test(NAME "${AUTORUN_TEST}"
+        add_test(NAME "benchmark:${AUTORUN_TEST}"
             COMMAND sharpSAT "test/benchmark/${AUTORUN_TEST}.cnf"
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         ) # Initialize the test
         file(READ "test/benchmark/${AUTORUN_TEST}.txt" EXPECTED_MODEL_COUNT)
-        set_tests_properties("${AUTORUN_TEST}" PROPERTIES
+        set_tests_properties("benchmark:${AUTORUN_TEST}" PROPERTIES
             PASS_REGULAR_EXPRESSION "^${EXPECTED_MODEL_COUNT}$"
         ) # Set the expected output
-        set_tests_properties("${AUTORUN_TEST}" PROPERTIES
+        set_tests_properties("benchmark:${AUTORUN_TEST}" PROPERTIES
             TIMEOUT 30
         ) # 30s timeout
     endforeach(AUTORUN_TEST)
