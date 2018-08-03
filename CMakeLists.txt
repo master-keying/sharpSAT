@@ -130,6 +130,12 @@ if (SHARPSAT_BUILD_TESTING AND BUILD_TESTING)
     set_tests_properties(integration:cli-timeout PROPERTIES
         TIMEOUT 3 ) # 3s test timeout, sharpSAT should end in 1s
 
+    # Test the timeout CLI option
+    add_test(NAME bugreport:vector_empty_front_called
+        COMMAND sharpSAT -noPP "test/benchmark/nips2011/LS6_diag.cnf"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} )
+    set_tests_properties(integration:cli-timeout PROPERTIES TIMEOUT 120 )
+
     # Read all easy instances from a file
     file(READ "${PROJECT_SOURCE_DIR}/test/benchmark/easy.txt" SHARPSAT_AUTORUN_TESTS)
     string(REGEX REPLACE ";" "\\\\;" SHARPSAT_AUTORUN_TESTS "${SHARPSAT_AUTORUN_TESTS}")
