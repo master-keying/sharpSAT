@@ -1,0 +1,690 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta charset="utf-8"/>
+        <title>sharpSAT.exe</title>
+        <link rel="stylesheet" type="text/css" href="../third-party/css/style.css"/>
+        <script src="../third-party/RGraph/libraries/RGraph.common.core.js" type="text/javascript"></script>
+        <script src="../third-party/RGraph/libraries/RGraph.common.dynamic.js" type="text/javascript"></script>
+        <script src="../third-party/RGraph/libraries/RGraph.common.tooltips.js" type="text/javascript"></script>
+        <script src="../third-party/RGraph/libraries/RGraph.pie.js" type="text/javascript"></script>
+        <script src="../third-party/JQuery/jquery-1.11.1.min.js"></script>
+    </head>
+    <body>
+    <script type="text/javascript">
+        $(document).ready(function ()
+        {
+            
+            new RGraph.Pie('pi_8e7c3325-cb38-4c64-aa7f-159843a08df9', [2036, 343])
+                .set('labels', ['Cover 85%','Uncover 15%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 2036 lines (85%)', 'uncover 343 lines (15%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_00ed40cd-700b-43a1-9310-2c6581f60b92', [7, 54])
+                .set('labels', ['Cover 11%','Uncover 89%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 7 lines (11%)', 'uncover 54 lines (89%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_77026621-ceee-4794-8c67-eb006880faa8', [35, 48])
+                .set('labels', ['Cover 42%','Uncover 58%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 35 lines (42%)', 'uncover 48 lines (58%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_dfd65ae4-b09c-4da2-ad5f-097fc182e23d', [21, 23])
+                .set('labels', ['Cover 47%','Uncover 53%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 21 lines (47%)', 'uncover 23 lines (53%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_e8faaf8c-e543-49c3-a0c9-ee23fc5cf860', [45, 33])
+                .set('labels', ['Cover 57%','Uncover 43%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 45 lines (57%)', 'uncover 33 lines (43%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_c12b8366-c4f6-4714-974b-f5243bbe60e2', [12, 7])
+                .set('labels', ['Cover 63%','Uncover 37%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 12 lines (63%)', 'uncover 7 lines (37%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_a74ed5d6-8496-4301-831e-b3000285a93e', [67, 33])
+                .set('labels', ['Cover 67%','Uncover 33%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 67 lines (67%)', 'uncover 33 lines (33%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_55abe6c0-a9e5-43e8-b439-db8f5671b18b', [45, 16])
+                .set('labels', ['Cover 73%','Uncover 27%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 45 lines (73%)', 'uncover 16 lines (27%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_6478ce41-5012-4022-b490-0d2fd87acbd7', [68, 14])
+                .set('labels', ['Cover 82%','Uncover 18%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 68 lines (82%)', 'uncover 14 lines (18%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_61594751-16ef-475f-94d1-96ec46515b7a', [91, 17])
+                .set('labels', ['Cover 84%','Uncover 16%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 91 lines (84%)', 'uncover 17 lines (16%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_f7d436ae-0269-4691-9a5e-fd6c30be0921', [229, 36])
+                .set('labels', ['Cover 86%','Uncover 14%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 229 lines (86%)', 'uncover 36 lines (14%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_a8a56593-969b-4c60-b13a-80f929add35b', [449, 46])
+                .set('labels', ['Cover 90%','Uncover 10%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 449 lines (90%)', 'uncover 46 lines (10%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_54288252-bbfc-47dd-87a0-4c085e545ef1', [118, 7])
+                .set('labels', ['Cover 94%','Uncover 6%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 118 lines (94%)', 'uncover 7 lines (6%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_4adce4b3-fbe6-4fe9-9465-e7a739594406', [86, 5])
+                .set('labels', ['Cover 94%','Uncover 6%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 86 lines (94%)', 'uncover 5 lines (6%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_cb3f64ab-4019-4060-9891-6d75be8e1410', [65, 3])
+                .set('labels', ['Cover 95%','Uncover 5%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 65 lines (95%)', 'uncover 3 lines (5%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_3d0a38b4-0340-4849-b57a-1818670f400e', [29, 1])
+                .set('labels', ['Cover 96%','Uncover 4%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 29 lines (96%)', 'uncover 1 lines (4%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_6e44716c-fe86-4b9f-b1ea-29894ea3cb78', [111, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 111 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_677ce181-dc54-4d7f-86b3-566494c73725', [64, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 64 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_a48d2fb6-4ff2-4b20-832b-bfd95dc07f1f', [38, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 38 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_86f534e8-0e91-4465-adc3-36cc8d9f17bb', [52, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 52 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_38bd89e7-0a88-4054-adc2-0d218a08d61d', [107, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 107 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_ddc6ab12-2c97-4386-8565-ea27a6b0d182', [87, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 87 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_100f0677-25ee-43c7-b6bd-060bfe790660', [34, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 34 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_f1e81841-f20e-4a71-91fd-4e4430b9176a', [2, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 2 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_dab6df99-3a54-4d3b-81ff-57c46e94d6a1', [21, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 21 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_bd102650-a145-4310-bfc2-2d67817ccd42', [98, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 98 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_49d99141-1c5e-4ca8-8571-02a1185d1224', [23, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 23 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_0f7d1549-1d8b-4318-a05a-99020459f534', [32, 0])
+                .set('labels', ['Cover 100%','Uncover 0%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 32 lines (100%)', 'uncover 0 lines (0%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+
+      })
+    </script>    
+        <h1>
+        sharpSAT.exe
+        </h1>
+        <h4>
+        
+        </h4>
+        <table id="rounded-corner">
+            <thead>
+                <tr>
+                    <th scope="col" class="rounded-left">Coverage</th>
+                    <th scope="col">Total lines</th>
+                    <th scope="col" class="rounded-right">Items</th>
+                </tr>
+            </thead> 
+            <tbody>
+                
+                <tr>
+                    <td>
+            <canvas id="pi_8e7c3325-cb38-4c64-aa7f-159843a08df9" width="280" height="100">Cover 85%</canvas>
+                    </td>            
+                    <td>2379</td>
+                    <td>            
+                      
+                      X:\sharpSAT\coverage\windows\Debug\sharpSAT.exe
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_00ed40cd-700b-43a1-9310-2c6581f60b92" width="280" height="100">Cover 11%</canvas>
+                    </td>            
+                    <td>61</td>
+                    <td>            
+                       <a href="sharpSAT/statistics.cpp.html">x:\sharpsat\coverage\src\statistics.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_77026621-ceee-4794-8c67-eb006880faa8" width="280" height="100">Cover 42%</canvas>
+                    </td>            
+                    <td>83</td>
+                    <td>            
+                       <a href="sharpSAT/component_cache.cpp.html">x:\sharpsat\coverage\src\component_cache.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_dfd65ae4-b09c-4da2-ad5f-097fc182e23d" width="280" height="100">Cover 47%</canvas>
+                    </td>            
+                    <td>44</td>
+                    <td>            
+                       <a href="sharpSAT/main.cpp.html">x:\sharpsat\coverage\src\main.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_e8faaf8c-e543-49c3-a0c9-ee23fc5cf860" width="280" height="100">Cover 57%</canvas>
+                    </td>            
+                    <td>78</td>
+                    <td>            
+                       <a href="sharpSAT/statistics.h.html">x:\sharpsat\coverage\include\sharpsat\statistics.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_c12b8366-c4f6-4714-974b-f5243bbe60e2" width="280" height="100">Cover 63%</canvas>
+                    </td>            
+                    <td>19</td>
+                    <td>            
+                       <a href="sharpSAT/base_packed_component.cpp.html">x:\sharpsat\coverage\src\component_types\base_packed_component.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_a74ed5d6-8496-4301-831e-b3000285a93e" width="280" height="100">Cover 67%</canvas>
+                    </td>            
+                    <td>100</td>
+                    <td>            
+                       <a href="sharpSAT/component_cache-inl.h.html">x:\sharpsat\coverage\include\sharpsat\component_cache-inl.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_55abe6c0-a9e5-43e8-b439-db8f5671b18b" width="280" height="100">Cover 73%</canvas>
+                    </td>            
+                    <td>61</td>
+                    <td>            
+                       <a href="sharpSAT/component_cache.h.html">x:\sharpsat\coverage\include\sharpsat\component_cache.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_6478ce41-5012-4022-b490-0d2fd87acbd7" width="280" height="100">Cover 82%</canvas>
+                    </td>            
+                    <td>82</td>
+                    <td>            
+                       <a href="sharpSAT/base_packed_component.h.html">x:\sharpsat\coverage\include\sharpsat\component_types\base_packed_component.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_61594751-16ef-475f-94d1-96ec46515b7a" width="280" height="100">Cover 84%</canvas>
+                    </td>            
+                    <td>108</td>
+                    <td>            
+                       <a href="sharpSAT/structures.h.html">x:\sharpsat\coverage\include\sharpsat\structures.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_f7d436ae-0269-4691-9a5e-fd6c30be0921" width="280" height="100">Cover 86%</canvas>
+                    </td>            
+                    <td>265</td>
+                    <td>            
+                       <a href="sharpSAT/instance.cpp.html">x:\sharpsat\coverage\src\instance.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_a8a56593-969b-4c60-b13a-80f929add35b" width="280" height="100">Cover 90%</canvas>
+                    </td>            
+                    <td>495</td>
+                    <td>            
+                       <a href="sharpSAT/solver.cpp.html">x:\sharpsat\coverage\src\solver.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_54288252-bbfc-47dd-87a0-4c085e545ef1" width="280" height="100">Cover 94%</canvas>
+                    </td>            
+                    <td>125</td>
+                    <td>            
+                       <a href="sharpSAT/instance.h.html">x:\sharpsat\coverage\include\sharpsat\instance.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_4adce4b3-fbe6-4fe9-9465-e7a739594406" width="280" height="100">Cover 94%</canvas>
+                    </td>            
+                    <td>91</td>
+                    <td>            
+                       <a href="sharpSAT/stack.h.html">x:\sharpsat\coverage\include\sharpsat\stack.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_cb3f64ab-4019-4060-9891-6d75be8e1410" width="280" height="100">Cover 95%</canvas>
+                    </td>            
+                    <td>68</td>
+                    <td>            
+                       <a href="sharpSAT/solver.h.html">x:\sharpsat\coverage\include\sharpsat\solver.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_3d0a38b4-0340-4849-b57a-1818670f400e" width="280" height="100">Cover 96%</canvas>
+                    </td>            
+                    <td>30</td>
+                    <td>            
+                       <a href="sharpSAT/primitive_types.h.html">x:\sharpsat\coverage\include\sharpsat\primitive_types.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_6e44716c-fe86-4b9f-b1ea-29894ea3cb78" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>111</td>
+                    <td>            
+                       <a href="sharpSAT/alt_component_analyzer.h.html">x:\sharpsat\coverage\include\sharpsat\alt_component_analyzer.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_677ce181-dc54-4d7f-86b3-566494c73725" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>64</td>
+                    <td>            
+                       <a href="sharpSAT/component_management.h.html">x:\sharpsat\coverage\include\sharpsat\component_management.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_a48d2fb6-4ff2-4b20-832b-bfd95dc07f1f" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>38</td>
+                    <td>            
+                       <a href="sharpSAT/cacheable_component.h.html">x:\sharpsat\coverage\include\sharpsat\component_types\cacheable_component.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_86f534e8-0e91-4465-adc3-36cc8d9f17bb" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>52</td>
+                    <td>            
+                       <a href="sharpSAT/component.h.html">x:\sharpsat\coverage\include\sharpsat\component_types\component.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_38bd89e7-0a88-4054-adc2-0d218a08d61d" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>107</td>
+                    <td>            
+                       <a href="sharpSAT/component_archetype.h.html">x:\sharpsat\coverage\include\sharpsat\component_types\component_archetype.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_ddc6ab12-2c97-4386-8565-ea27a6b0d182" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>87</td>
+                    <td>            
+                       <a href="sharpSAT/difference_packed_component.h.html">x:\sharpsat\coverage\include\sharpsat\component_types\difference_packed_component.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_100f0677-25ee-43c7-b6bd-060bfe790660" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>34</td>
+                    <td>            
+                       <a href="sharpSAT/containers.h.html">x:\sharpsat\coverage\include\sharpsat\containers.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_f1e81841-f20e-4a71-91fd-4e4430b9176a" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>2</td>
+                    <td>            
+                       <a href="sharpSAT/stopwatch.h.html">x:\sharpsat\coverage\include\sharpsat\stopwatch.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_dab6df99-3a54-4d3b-81ff-57c46e94d6a1" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>21</td>
+                    <td>            
+                       <a href="sharpSAT/unions.h.html">x:\sharpsat\coverage\include\sharpsat\unions.h</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_bd102650-a145-4310-bfc2-2d67817ccd42" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>98</td>
+                    <td>            
+                       <a href="sharpSAT/alt_component_analyzer.cpp.html">x:\sharpsat\coverage\src\alt_component_analyzer.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_49d99141-1c5e-4ca8-8571-02a1185d1224" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>23</td>
+                    <td>            
+                       <a href="sharpSAT/component_management.cpp.html">x:\sharpsat\coverage\src\component_management.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_0f7d1549-1d8b-4318-a05a-99020459f534" width="280" height="100">Cover 100%</canvas>
+                    </td>            
+                    <td>32</td>
+                    <td>            
+                       <a href="sharpSAT/stopwatch.cpp.html">x:\sharpsat\coverage\src\stopwatch.cpp</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+            </tbody>
+            <tfoot>
+                <tr>
+                <td colspan="2" class="rounded-foot-left"></td>
+                <td class="rounded-foot-right"></td>
+                </tr>
+            </tfoot>            
+        </table>
+    </body>
+</html>

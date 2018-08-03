@@ -1,0 +1,242 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>difference_packed_component.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * difference_packed_component.h
+ *
+ *  Created on: Feb 5, 2013
+ *      Author: mthurley
+ */
+
+#ifndef SHARP_SAT_DIFFERENCE_PACKED_COMPONENT_H_
+#define SHARP_SAT_DIFFERENCE_PACKED_COMPONENT_H_
+
+#include &lt;sharpSAT/component_types/base_packed_component.h&gt;
+#include &lt;sharpSAT/component_types/component.h&gt;
+
+#include &lt;math.h&gt;
+
+namespace sharpSAT {
+
+class DifferencePackedComponent:public BasePackedComponent {
+public:
+
+<span style = "background-color:#dfd">  DifferencePackedComponent() {
+  }</span>
+
+  inline DifferencePackedComponent(Component &amp;rComp);
+
+<span style = "background-color:#dfd">  unsigned num_variables() const{
+    uint64_t *p = (uint64_t *) data_;
+    return (*p &gt;&gt; bits_of_data_size()) &amp; (uint64_t) variable_mask();</span>
+
+<span style = "background-color:#dfd">  }</span>
+
+<span style = "background-color:#dfd">  unsigned data_size() const {
+         return *data_ &amp; _data_size_mask;
+    }</span>
+
+<span style = "background-color:#dfd">  unsigned data_only_byte_size() const {
+        return data_size()* sizeof(unsigned);
+    }</span>
+
+<span style = "background-color:#dfd">    unsigned raw_data_byte_size() const {
+          return data_size()* sizeof(unsigned)</span>
+               + model_count_.get_mpz_t()-&gt;_mp_alloc * sizeof(mp_limb_t);
+<span style = "background-color:#dfd">    }</span>
+
+    // raw data size with the overhead
+    // for the supposed 16byte alignment of malloc
+<span style = "background-color:#dfd">    unsigned sys_overhead_raw_data_byte_size() const {
+      unsigned ds = data_size()* sizeof(unsigned);
+      unsigned ms = model_count_.get_mpz_t()-&gt;_mp_alloc * sizeof(mp_limb_t);</span>
+//      unsigned mask = 0xfffffff8;
+//      return (ds &amp; mask) + ((ds &amp; 7)?8:0)
+//            +(ms &amp; mask) + ((ms &amp; 7)?8:0);
+<span style = "background-color:#dfd">      unsigned mask = 0xfffffff0;
+            return (ds &amp; mask) + ((ds &amp; 15)?16:0)</span>
+                  +(ms &amp; mask) + ((ms &amp; 15)?16:0);
+<span style = "background-color:#dfd">    }</span>
+
+<span style = "background-color:#dfd">  bool equals(const DifferencePackedComponent &amp;comp) const {
+    if(hashkey_ != comp.hashkey())
+      return false;
+    unsigned* p = data_;
+    unsigned* r = comp.data_;
+    while(p != data_ + data_size()) {
+        if(*(p++) != *(r++))
+            return false;
+    }
+    return true;
+  }</span>
+
+private:
+
+};
+
+
+
+<span style = "background-color:#dfd">DifferencePackedComponent::DifferencePackedComponent(Component &amp;rComp) {</span>
+  //assert(rComp.varsBegin()-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL
+  //  &amp;&amp; "There are no variables in the component. That may be an issue.");
+
+<span style = "background-color:#dfd">  unsigned max_var_diff = 0;
+  unsigned hashkey_vars = static_cast&lt;unsigned&gt;(*rComp.varsBegin());
+  if (rComp.varsBegin()-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL) {
+    for (auto it = rComp.varsBegin() + 1; it-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL; it++) {
+      auto star_it = static_cast&lt;unsigned&gt;(it-&gt;get&lt;VariableIndex&gt;());
+      auto star_it_minus_one = static_cast&lt;unsigned&gt;((it - 1)-&gt;get&lt;VariableIndex&gt;());</span>
+
+<span style = "background-color:#dfd">      hashkey_vars = (hashkey_vars * 3) + star_it;
+      if ((star_it - star_it_minus_one) - 1 &gt; max_var_diff)
+        max_var_diff = (star_it - star_it_minus_one) - 1;
+    }</span>
+  }
+
+<span style = "background-color:#dfd">  unsigned hashkey_clauses = static_cast&lt;unsigned&gt;(*rComp.clsBegin());
+  unsigned max_clause_diff = 0;
+  if (rComp.clsBegin()-&gt;get&lt;ClauseIndex&gt;() != clsSENTINEL) {
+    for (auto jt = rComp.clsBegin() + 1; jt-&gt;get&lt;ClauseIndex&gt;() != clsSENTINEL; jt++) {
+      auto star_jt = static_cast&lt;unsigned&gt;(jt-&gt;get&lt;ClauseIndex&gt;());
+      auto star_jt_minus_one = static_cast&lt;unsigned&gt;((jt - 1)-&gt;get&lt;ClauseIndex&gt;());</span>
+
+<span style = "background-color:#dfd">      hashkey_clauses = hashkey_clauses*3 + static_cast&lt;unsigned&gt;(*jt);
+      if (star_jt - star_jt_minus_one - 1 &gt; max_clause_diff)
+        max_clause_diff = star_jt - star_jt_minus_one - 1;
+    }</span>
+  }
+
+<span style = "background-color:#dfd">  hashkey_ = hashkey_vars + ((unsigned) hashkey_clauses &lt;&lt; 11) + ((unsigned) hashkey_clauses &gt;&gt; 23);</span>
+
+  //VERIFIED the definition of bits_per_var_diff and bits_per_clause_diff
+<span style = "background-color:#dfd">  unsigned bits_per_var_diff = log2(max_var_diff) + 1;
+  unsigned bits_per_clause_diff = log2(max_clause_diff) + 1;</span>
+
+<span style = "background-color:#dfd">  assert(bits_per_var_diff &lt;= 31);
+  assert(bits_per_clause_diff &lt;= 31);</span>
+
+<span style = "background-color:#dfd">  unsigned data_size_vars = bits_of_data_size() + 2*bits_per_variable() + 5;</span>
+
+<span style = "background-color:#dfd">  data_size_vars += (rComp.num_variables() - 1) * bits_per_var_diff ;</span>
+
+<span style = "background-color:#dfd">  unsigned data_size_clauses = 0;
+  if (rComp.clsBegin()-&gt;get&lt;ClauseIndex&gt;() != clsSENTINEL)
+    data_size_clauses += bits_per_clause() + 5</span>
+       + (rComp.numLongClauses() - 1) * bits_per_clause_diff;
+
+<span style = "background-color:#dfd">  unsigned data_size = (data_size_vars + data_size_clauses + bits_per_block() - 1) / bits_per_block();</span>
+
+<span style = "background-color:#dfd">  data_ = new unsigned[data_size];</span>
+
+  // assert((data_size &gt;&gt; bits_of_data_size()) == 0);
+<span style = "background-color:#dfd">  BitStuffer&lt;unsigned&gt; bs(data_);</span>
+
+<span style = "background-color:#dfd">  bs.stuff(data_size, bits_of_data_size());
+  bs.stuff(rComp.num_variables(), bits_per_variable());
+  bs.stuff(bits_per_var_diff, 5);
+  bs.stuff(static_cast&lt;unsigned&gt;(rComp.varsBegin()-&gt;get&lt;VariableIndex&gt;()), bits_per_variable());</span>
+
+<span style = "background-color:#dfd">  if(bits_per_var_diff)
+  for (auto it = rComp.varsBegin() + 1; it-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL; it++) {
+    auto star_it = static_cast&lt;unsigned&gt;(it-&gt;get&lt;VariableIndex&gt;());
+    auto star_it_minus_one = static_cast&lt;unsigned&gt;((it - 1)-&gt;get&lt;VariableIndex&gt;());</span>
+
+<span style = "background-color:#dfd">    bs.stuff(star_it - star_it_minus_one - 1, bits_per_var_diff);
+  }</span>
+
+
+<span style = "background-color:#dfd">  if (rComp.clsBegin()-&gt;get&lt;ClauseIndex&gt;() != clsSENTINEL) {
+    bs.stuff(bits_per_clause_diff, 5);
+    bs.stuff(static_cast&lt;unsigned&gt;(*rComp.clsBegin()), bits_per_clause());
+    if(bits_per_clause_diff)
+     for (auto jt = rComp.clsBegin() + 1; jt-&gt;get&lt;ClauseIndex&gt;() != clsSENTINEL; jt++) {
+      auto star_jt = static_cast&lt;unsigned&gt;(jt-&gt;get&lt;ClauseIndex&gt;());
+      auto star_jt_minus_one = static_cast&lt;unsigned&gt;((jt - 1)-&gt;get&lt;ClauseIndex&gt;());
+      bs.stuff(star_jt - star_jt_minus_one - 1, bits_per_clause_diff);
+     }</span>
+  }
+
+  // to check wheter the "END" block of bits_per_clause()
+  // many zeros fits into the current
+  //bs.end_check(bits_per_clause());
+  // this will tell us if we computed the data_size
+  // correctly
+<span style = "background-color:#dfd">  bs.assert_size(data_size);
+}</span>
+
+
+//DifferencePackedComponent::DifferencePackedComponent(Component &amp;rComp) {
+//
+//  unsigned max_var_diff = 0;
+//  unsigned hashkey_vars = *rComp.varsBegin();
+//  for (auto it = rComp.varsBegin() + 1; *it != varsSENTINEL; it++) {
+//    hashkey_vars = (hashkey_vars * 3) + *it;
+//    if ((*it - *(it - 1)) &gt; max_var_diff)
+//      max_var_diff = (*it - *(it - 1)) ;
+//  }
+//
+//  unsigned hashkey_clauses = *rComp.clsBegin();
+//  unsigned max_clause_diff = 0;
+//  if (*rComp.clsBegin()) {
+//    for (auto jt = rComp.clsBegin() + 1; *jt != clsSENTINEL; jt++) {
+//      hashkey_clauses = hashkey_clauses * 3 + *jt;
+//      if (*jt - *(jt - 1) &gt; max_clause_diff)
+//        max_clause_diff = *jt - *(jt - 1);
+//    }
+//  }
+//
+//  hashkey_ = hashkey_vars + (((unsigned) hashkey_clauses) &lt;&lt; 16);
+//
+//  //VERIFIED the definition of bits_per_var_diff and bits_per_clause_diff
+//  unsigned bits_per_var_diff = log2(max_var_diff) + 1;
+//  unsigned bits_per_clause_diff = log2(max_clause_diff) + 1;
+//
+//  unsigned data_size_vars = 2*bits_per_variable() + 5;
+//
+//  data_size_vars += (rComp.num_variables() - 1) * bits_per_var_diff ;
+//
+//  unsigned data_size_clauses = bits_per_clause();
+//  if(*rComp.clsBegin())
+//    data_size_clauses += bits_per_clause() + 5
+//       + (rComp.numLongClauses() - 1) * bits_per_clause_diff;
+//
+//  unsigned data_size = (data_size_vars + data_size_clauses)/bits_per_block();
+//    data_size+=  ((data_size_vars + data_size_clauses) % bits_per_block())? 1 : 0;
+//
+//  data_ = new unsigned[data_size];
+//
+//  BitStuffer&lt;unsigned&gt; bs(data_);
+//
+//  bs.stuff(rComp.num_variables(), bits_per_variable());
+//  bs.stuff(bits_per_var_diff, 5);
+//  bs.stuff(*rComp.varsBegin(), bits_per_variable());
+//
+//  for (auto it = rComp.varsBegin() + 1; *it != varsSENTINEL; it++)
+//    bs.stuff(*it - *(it - 1), bits_per_var_diff);
+//
+//  if (*rComp.clsBegin()) {
+//    bs.stuff(bits_per_clause_diff, 5);
+//    bs.stuff(*rComp.clsBegin(), bits_per_clause());
+//    for (auto jt = rComp.clsBegin() + 1; *jt != clsSENTINEL; jt++)
+//      bs.stuff(*jt - *(jt - 1), bits_per_clause_diff);
+//  }
+//
+//  // to check wheter the "END" block of bits_per_clause()
+//  // many zeros fits into the current
+//  bs.end_check(bits_per_clause());
+//  // this will tell us if we computed the data_size
+//  // correctly
+//  bs.assert_size(data_size);
+//}
+} // sharpSAT namespace
+#endif /* DIFFERENCE_PACKED_COMPONENT_H_ */</pre>
+	</body>
+</html>

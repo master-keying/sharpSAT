@@ -1,0 +1,885 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>solver.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * solver.cpp
+ *
+ *  Created on: Aug 23, 2012
+ *      Author: marc
+ */
+#include &lt;sharpSAT/solver.h&gt;
+#include &lt;algorithm&gt;
+#include &lt;deque&gt;
+#include &lt;iostream&gt;
+#include &lt;tuple&gt;
+
+using namespace std;
+
+namespace sharpSAT {
+
+<span style = "background-color:#fdd">void Solver::print(vector&lt;LiteralID&gt; &amp;vec) {
+	for (auto l : vec)
+		cout &lt;&lt; l.toInt() &lt;&lt; " ";
+	cout &lt;&lt; endl;
+}</span>
+
+<span style = "background-color:#fdd">void Solver::print(vector&lt;unsigned&gt; &amp;vec) {
+	for (auto l : vec)
+		cout &lt;&lt; l &lt;&lt; " ";
+	cout &lt;&lt; endl;
+}</span>
+
+<span style = "background-color:#dfd">bool Solver::simplePreProcess() {</span>
+
+<span style = "background-color:#dfd">	if (!config_.perform_pre_processing)
+		return true;
+	assert(literal_stack_.size() == 0);
+	unsigned start_ofs = 0;</span>
+//BEGIN process unit clauses
+<span style = "background-color:#dfd">	for (auto lit : unit_clauses_)
+		setLiteralIfFree(lit);</span>
+//END process unit clauses
+<span style = "background-color:#dfd">	bool succeeded = BCP(start_ofs);</span>
+
+<span style = "background-color:#dfd">	if (succeeded)
+		succeeded &amp;= prepFailedLiteralTest();</span>
+
+<span style = "background-color:#dfd">	if (succeeded)
+		HardWireAndCompact();
+	return succeeded;
+}</span>
+
+<span style = "background-color:#dfd">bool Solver::prepFailedLiteralTest() {</span>
+	unsigned last_size;
+	do {
+<span style = "background-color:#dfd">		last_size = literal_stack_.size();
+		for (VariableIndex v(1); v &lt; VariableIndex(variables_.size()); ++v)
+		    if (isActive(LiteralID(v, true))) {
+				unsigned sz = literal_stack_.size();
+				setLiteralIfFree(LiteralID(v, true));
+				bool res = BCP(sz);
+				while (literal_stack_.size() &gt; sz) {
+					unSet(literal_stack_.back());
+					literal_stack_.pop_back();
+				}</span>
+
+<span style = "background-color:#dfd">				if (!res) {
+					sz = literal_stack_.size();
+					setLiteralIfFree(LiteralID(v, false));
+					if (!BCP(sz))</span>
+<span style = "background-color:#fdd">						return false;</span>
+<span style = "background-color:#dfd">				} else {</span>
+
+<span style = "background-color:#dfd">					sz = literal_stack_.size();
+					setLiteralIfFree(LiteralID(v, false));
+					bool resb = BCP(sz);
+					while (literal_stack_.size() &gt; sz) {
+						unSet(literal_stack_.back());
+						literal_stack_.pop_back();
+					}
+					if (!resb) {
+						sz = literal_stack_.size();
+						setLiteralIfFree(LiteralID(v, true));
+						if (!BCP(sz))</span>
+<span style = "background-color:#fdd">							return false;</span>
+					}
+				}
+<span style = "background-color:#dfd">			}
+	} while (literal_stack_.size() &gt; last_size);</span>
+
+<span style = "background-color:#dfd">	return true;
+}</span>
+
+<span style = "background-color:#dfd">void Solver::HardWireAndCompact() {
+	compactClauses();
+	compactVariables();
+	literal_stack_.clear();</span>
+
+<span style = "background-color:#dfd">	for (auto l = LiteralID(VariableIndex(1), false); l != literals_.end_lit(); l.inc()) {
+		literal(l).activity_score_ = literal(l).binary_links_.size() - 1;
+		literal(l).activity_score_ += occurrence_lists_[l].size();
+	}</span>
+
+<span style = "background-color:#dfd">	statistics_.num_unit_clauses_ = unit_clauses_.size();</span>
+
+<span style = "background-color:#dfd">	statistics_.num_original_binary_clauses_ = statistics_.num_binary_clauses_;
+	statistics_.num_original_unit_clauses_ = statistics_.num_unit_clauses_ =</span>
+			unit_clauses_.size();
+<span style = "background-color:#dfd">	initStack(num_variables());
+	original_lit_pool_size_ = literal_pool_.size();
+}</span>
+
+<span style = "background-color:#dfd">void Solver::solve() {
+	initStack(num_variables());</span>
+
+<span style = "background-color:#dfd">	if (config_.verbose) {</span>
+<span style = "background-color:#fdd">		statistics_.printShortFormulaInfo();</span>
+	}
+<span style = "background-color:#dfd">	if (config_.verbose)</span>
+<span style = "background-color:#fdd">		cout &lt;&lt; endl &lt;&lt; "Preprocessing .." &lt;&lt; flush;</span>
+<span style = "background-color:#dfd">	bool notfoundUNSAT = simplePreProcess();
+	if (config_.verbose)</span>
+<span style = "background-color:#fdd">		cout &lt;&lt; " DONE" &lt;&lt; endl;</span>
+
+<span style = "background-color:#dfd">	if (notfoundUNSAT) {</span>
+
+<span style = "background-color:#dfd">		if (config_.verbose) {</span>
+<span style = "background-color:#fdd">			statistics_.printShortFormulaInfo();</span>
+		}
+
+<span style = "background-color:#dfd">		last_ccl_deletion_time_ = last_ccl_cleanup_time_ =</span>
+				statistics_.getTime();
+
+<span style = "background-color:#dfd">		violated_clause.reserve(num_variables());</span>
+
+<span style = "background-color:#dfd">		comp_manager_.initialize(literals_, literal_pool_);</span>
+
+<span style = "background-color:#dfd">		statistics_.exit_state_ = countSAT();</span>
+
+<span style = "background-color:#dfd">		statistics_.set_final_solution_count(stack_.top().getTotalModelCount());
+		statistics_.num_long_conflict_clauses_ = num_conflict_clauses();</span>
+
+<span style = "background-color:#dfd">	} else {</span>
+<span style = "background-color:#fdd">		statistics_.exit_state_ = SOLVER_StateT::SUCCESS;
+		statistics_.set_final_solution_count(0.0);
+		if (config_.verbose) {
+			cout &lt;&lt; endl &lt;&lt; " FOUND UNSAT DURING PREPROCESSING " &lt;&lt; endl;</span>
+		}
+	}
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">void Solver::load_and_solve(const string &amp;file_name) {
+	stopwatch_.start();
+	statistics_.input_file_ = file_name;</span>
+
+<span style = "background-color:#dfd">	createfromFile(file_name);</span>
+
+<span style = "background-color:#dfd">	if (config_.verbose) {</span>
+<span style = "background-color:#fdd">		cout &lt;&lt; "Solving " &lt;&lt; file_name &lt;&lt; endl;</span>
+	}
+
+<span style = "background-color:#dfd">	solve();</span>
+
+<span style = "background-color:#dfd">	stopwatch_.stop();
+	statistics_.time_elapsed_ = stopwatch_.getElapsedSeconds();</span>
+
+<span style = "background-color:#dfd">	comp_manager_.gatherStatistics();
+	if (config_.verbose) {</span>
+<span style = "background-color:#fdd">		statistics_.writeToFile("data.out");
+		statistics_.printShort();</span>
+<span style = "background-color:#dfd">	} else if (!config_.quiet) {
+		statistics_.print_final_solution_count();
+		cout &lt;&lt; endl;</span>
+	}
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">SOLVER_StateT Solver::countSAT() {
+	retStateT state = retStateT::RESOLVED;</span>
+
+<span style = "background-color:#dfd">	while (true) {
+		while (comp_manager_.findNextRemainingComponentOf(stack_.top())) {
+			decideLiteral();
+			if (stopwatch_.timeBoundBroken())
+				return SOLVER_StateT::TIMEOUT;
+			if (stopwatch_.interval_tick())
+				printOnlineStats();</span>
+
+<span style = "background-color:#dfd">			while (!bcp()) {
+				state = resolveConflict();
+				if (state == retStateT::BACKTRACK)
+					break;
+			}
+			if (state == retStateT::BACKTRACK)
+				break;
+		}</span>
+
+<span style = "background-color:#dfd">		state = backtrack();
+		if (state == retStateT::EXIT)
+			return SOLVER_StateT::SUCCESS;
+		while (state != retStateT::PROCESS_COMPONENT &amp;&amp; !bcp()) {
+			state = resolveConflict();
+			if (state == retStateT::BACKTRACK) {
+				state = backtrack();
+				if (state == retStateT::EXIT)
+					return SOLVER_StateT::SUCCESS;</span>
+			}
+<span style = "background-color:#dfd">		}
+	}</span>
+<span style = "background-color:#fdd">	return SOLVER_StateT::SUCCESS;</span>
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">void Solver::decideLiteral() {</span>
+	// establish another decision stack level
+<span style = "background-color:#dfd">	stack_.push_back(</span>
+			StackLevel(stack_.top().currentRemainingComponent(),
+					literal_stack_.size(),
+					comp_manager_.component_stack_size()));
+<span style = "background-color:#dfd">	float max_score = -1;</span>
+	float score;
+<span style = "background-color:#dfd">	VariableIndex max_score_var(0);</span>
+	for (auto it =
+<span style = "background-color:#dfd">			comp_manager_.superComponentOf(stack_.top()).varsBegin();
+			it-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL; it++) {
+		score = scoreOf(it-&gt;get&lt;VariableIndex&gt;());
+		if (score &gt; max_score) {
+			max_score = score;
+			max_score_var = it-&gt;get&lt;VariableIndex&gt;();
+		}
+	}</span>
+	// this assert should always hold,
+	// if not then there is a bug in the logic of countSAT();
+<span style = "background-color:#dfd">	assert(max_score_var != VariableIndex(0));</span>
+
+<span style = "background-color:#dfd">	LiteralID theLit(max_score_var,</span>
+			literal(LiteralID(max_score_var, true)).activity_score_
+					&gt; literal(LiteralID(max_score_var, false)).activity_score_);
+
+<span style = "background-color:#dfd">	setLiteralIfFree(theLit);
+	statistics_.num_decisions_++;</span>
+
+<span style = "background-color:#dfd">	if (statistics_.num_decisions_ % 128 == 0)</span>
+//    if (statistics_.num_conflicts_ % 128 == 0)
+<span style = "background-color:#dfd">     decayActivities();</span>
+       // decayActivitiesOf(comp_manager_.superComponentOf(stack_.top()));
+<span style = "background-color:#dfd">	assert(</span>
+			stack_.top().remaining_components_ofs() &lt;= comp_manager_.component_stack_size());
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">retStateT Solver::backtrack() {
+	assert(</span>
+			stack_.top().remaining_components_ofs() &lt;= comp_manager_.component_stack_size());
+	do {
+<span style = "background-color:#dfd">		if (stack_.top().branch_found_unsat())
+			comp_manager_.removeAllCachePollutionsOf(stack_.top());
+		else if (stack_.top().anotherCompProcessible())
+			return retStateT::PROCESS_COMPONENT;</span>
+
+<span style = "background-color:#dfd">		if (!stack_.top().isSecondBranch()) {
+			LiteralID aLit = TOS_decLit();
+			assert(stack_.get_decision_level() &gt; 0);
+			stack_.top().changeBranch();
+			reactivateTOS();
+			setLiteralIfFree(aLit.neg(), NOT_A_CLAUSE);
+			return retStateT::RESOLVED;</span>
+		}
+		// OTHERWISE:  backtrack further
+<span style = "background-color:#dfd">		comp_manager_.cacheModelCountOf(stack_.top().super_component(),</span>
+				stack_.top().getTotalModelCount());
+
+<span style = "background-color:#dfd">		if (stack_.get_decision_level() &lt;= 0)
+			break;
+		reactivateTOS();</span>
+
+<span style = "background-color:#dfd">		assert(stack_.size()&gt;=2);
+		(stack_.end() - 2)-&gt;includeSolution(stack_.top().getTotalModelCount());
+		stack_.pop_back();</span>
+		// step to the next component not yet processed
+<span style = "background-color:#dfd">		stack_.top().nextUnprocessedComponent();</span>
+
+<span style = "background-color:#dfd">		assert(</span>
+				stack_.top().remaining_components_ofs() &lt; comp_manager_.component_stack_size()+1);
+
+<span style = "background-color:#dfd">	} while (stack_.get_decision_level() &gt;= 0);
+	return retStateT::EXIT;
+}</span>
+
+<span style = "background-color:#dfd">retStateT Solver::resolveConflict() {
+	recordLastUIPCauses();</span>
+
+	if (statistics_.num_clauses_learned_ - last_ccl_deletion_time_
+<span style = "background-color:#dfd">			&gt; statistics_.clause_deletion_interval()) {
+		deleteConflictClauses();
+		last_ccl_deletion_time_ = statistics_.num_clauses_learned_;</span>
+	}
+
+<span style = "background-color:#dfd">	if (statistics_.num_clauses_learned_ - last_ccl_cleanup_time_ &gt; 100000) {</span>
+<span style = "background-color:#fdd">		compactConflictLiteralPool();
+		last_ccl_cleanup_time_ = statistics_.num_clauses_learned_;</span>
+	}
+
+<span style = "background-color:#dfd">	statistics_.num_conflicts_++;</span>
+
+<span style = "background-color:#dfd">	assert(</span>
+			stack_.top().remaining_components_ofs() &lt;= comp_manager_.component_stack_size());
+
+<span style = "background-color:#dfd">	assert(uip_clauses_.size() == 1);</span>
+
+	// DEBUG
+<span style = "background-color:#dfd">	if (uip_clauses_.back().size() == 0 &amp;&amp; config_.verbose)</span>
+<span style = "background-color:#fdd">		cout &lt;&lt; " EMPTY CLAUSE FOUND" &lt;&lt; endl;</span>
+	// END DEBUG
+
+<span style = "background-color:#dfd">	stack_.top().mark_branch_unsat();</span>
+	//BEGIN Backtracking
+	// maybe the other branch had some solutions
+<span style = "background-color:#dfd">	if (stack_.top().isSecondBranch()) {
+		return retStateT::BACKTRACK;</span>
+	}
+
+<span style = "background-color:#dfd">	Antecedent ant(NOT_A_CLAUSE);</span>
+	// this has to be checked since using implicit BCP
+	// and checking literals there not exhaustively
+	// we cannot guarantee that uip_clauses_.back().front() == TOS_decLit().neg()
+	// this is because we might have checked a literal
+	// during implict BCP which has been a failed literal
+	// due only to assignments made at lower decision levels
+<span style = "background-color:#dfd">	if (uip_clauses_.back().front() == TOS_decLit().neg()) {
+		assert(TOS_decLit().neg() == uip_clauses_.back()[0]);
+		var(TOS_decLit().neg()).ante = addUIPConflictClause(</span>
+				uip_clauses_.back());
+<span style = "background-color:#dfd">		ant = var(TOS_decLit()).ante;</span>
+	}
+//	// RRR
+//	else if(var(uip_clauses_.back().front()).decision_level
+//			&lt; stack_.get_decision_level()
+//			&amp;&amp; assertion_level_ &lt;  stack_.get_decision_level()){
+//         stack_.top().set_both_branches_unsat();
+//         return BACKTRACK;
+//	}
+//
+//
+//	// RRR
+<span style = "background-color:#dfd">	assert(stack_.get_decision_level() &gt; 0);
+	assert(stack_.top().branch_found_unsat());</span>
+
+	// we do not have to remove pollutions here,
+	// since conflicts only arise directly before
+	// remaining components are stored
+	// hence
+<span style = "background-color:#dfd">	assert(</span>
+			stack_.top().remaining_components_ofs() == comp_manager_.component_stack_size());
+
+<span style = "background-color:#dfd">	stack_.top().changeBranch();
+	LiteralID lit = TOS_decLit();
+	reactivateTOS();
+	setLiteralIfFree(lit.neg(), ant);</span>
+//END Backtracking
+<span style = "background-color:#dfd">	return retStateT::RESOLVED;
+}</span>
+
+<span style = "background-color:#dfd">bool Solver::bcp() {</span>
+// the asserted literal has been set, so we start
+// bcp on that literal
+<span style = "background-color:#dfd">	size_t start_ofs = literal_stack_.size() - 1;</span>
+
+//BEGIN process unit clauses
+<span style = "background-color:#dfd">	for (auto lit : unit_clauses_)
+		setLiteralIfFree(lit);</span>
+//END process unit clauses
+
+<span style = "background-color:#dfd">	bool bSucceeded = BCP(start_ofs);</span>
+
+<span style = "background-color:#dfd">	if (config_.perform_failed_lit_test &amp;&amp; bSucceeded) {
+		bSucceeded = implicitBCP();</span>
+	}
+<span style = "background-color:#dfd">	return bSucceeded;
+}</span>
+
+<span style = "background-color:#dfd">bool Solver::BCP(size_t start_at_stack_ofs) {
+	for (size_t i = start_at_stack_ofs; i &lt; literal_stack_.size(); i++) {
+		LiteralID unLit = literal_stack_[i].neg();</span>
+		//BEGIN Propagate Bin Clauses
+<span style = "background-color:#dfd">		for (auto bt = literal(unLit).binary_links_.begin();
+				*bt != SENTINEL_LIT; bt++) {
+			if (isResolved(*bt)) {
+				setConflictState(unLit, *bt);
+				return false;</span>
+			}
+<span style = "background-color:#dfd">			setLiteralIfFree(*bt, Antecedent(unLit));
+		}</span>
+		//END Propagate Bin Clauses
+<span style = "background-color:#dfd">        auto&amp; unLit_watch_list = literal(unLit).watch_list_;</span>
+
+<span style = "background-color:#dfd">        for (auto itcl = unLit_watch_list.size() - 1;
+             unLit_watch_list[itcl] != SENTINEL_CL; --itcl) {
+			bool isLitA = (*beginOf(unLit_watch_list[itcl]) == unLit);
+			auto p_watchLit = beginOf(unLit_watch_list[itcl]) + 1 - isLitA;
+			auto p_otherLit = beginOf(unLit_watch_list[itcl]) + isLitA;</span>
+
+<span style = "background-color:#dfd">            if (isSatisfied(*p_otherLit))
+                continue;
+			auto itL = beginOf(unLit_watch_list[itcl]) + 2;
+			while (isResolved(*itL))
+				itL++;</span>
+			// either we found a free or satisfied lit
+<span style = "background-color:#dfd">			if (*itL != SENTINEL_LIT) {
+				literal(*itL).addWatchLinkTo(unLit_watch_list[itcl]);
+				swap(*itL, *p_watchLit);
+				unLit_watch_list[itcl] = unLit_watch_list.back();
+				unLit_watch_list.pop_back();
+			} else {</span>
+				// or p_unLit stays resolved
+				// and we have hence no free literal left
+				// for p_otherLit remain poss: Active or Resolved
+<span style = "background-color:#dfd">				if (setLiteralIfFree(*p_otherLit, Antecedent(unLit_watch_list[itcl]))) { // implication
+					if (isLitA)
+						swap(*p_otherLit, *p_watchLit);
+				} else {
+					setConflictState(unLit_watch_list[itcl]);
+					return false;</span>
+				}
+			}
+<span style = "background-color:#dfd">		}
+	}
+	return true;
+}</span>
+
+//bool Solver::implicitBCP() {
+//  static vector&lt;LiteralID&gt; test_lits(num_variables());
+//  static LiteralIndexedVector&lt;unsigned char&gt; viewed_lits(num_variables() + 1,
+//      0);
+//
+//  unsigned stack_ofs = stack_.top().literal_stack_ofs();
+//  while (stack_ofs &lt; literal_stack_.size()) {
+//    test_lits.clear();
+//    for (auto it = literal_stack_.begin() + stack_ofs;
+//        it != literal_stack_.end(); it++) {
+//      for (auto cl_ofs : occurrence_lists_[it-&gt;neg()])
+//        if (!isSatisfied(cl_ofs)) {
+//          for (auto lt = beginOf(cl_ofs); *lt != SENTINEL_LIT; lt++)
+//            if (isActive(*lt) &amp;&amp; !viewed_lits[lt-&gt;neg()]) {
+//              test_lits.push_back(lt-&gt;neg());
+//              viewed_lits[lt-&gt;neg()] = true;
+//
+//            }
+//        }
+//    }
+//
+//    stack_ofs = literal_stack_.size();
+//    for (auto jt = test_lits.begin(); jt != test_lits.end(); jt++)
+//      viewed_lits[*jt] = false;
+//
+//    statistics_.num_failed_literal_tests_ += test_lits.size();
+//
+//    for (auto lit : test_lits)
+//      if (isActive(lit)) {
+//        unsigned sz = literal_stack_.size();
+//        // we increase the decLev artificially
+//        // s.t. after the tentative BCP call, we can learn a conflict clause
+//        // relative to the assignment of *jt
+//        stack_.startFailedLitTest();
+//        setLiteralIfFree(lit);
+//
+//        assert(!hasAntecedent(lit));
+//
+//        bool bSucceeded = BCP(sz);
+//        if (!bSucceeded)
+//          recordAllUIPCauses();
+//
+//        stack_.stopFailedLitTest();
+//
+//        while (literal_stack_.size() &gt; sz) {
+//          unSet(literal_stack_.back());
+//          literal_stack_.pop_back();
+//        }
+//
+//        if (!bSucceeded) {
+//        	statistics_.num_failed_literals_detected_++;
+//          sz = literal_stack_.size();
+//          for (auto it = uip_clauses_.rbegin(); it != uip_clauses_.rend();
+//              it++) {
+//            setLiteralIfFree(it-&gt;front(), addUIPConflictClause(*it));
+//          }
+//          if (!BCP(sz))
+//            return false;
+//        }
+//      }
+//  }
+//  return true;
+//}
+
+// this is IBCP 30.08
+<span style = "background-color:#dfd">bool Solver::implicitBCP() {
+	static vector&lt;LiteralID&gt; test_lits(num_variables());
+	static LiteralIndexedVector&lt;unsigned char&gt; viewed_lits(num_variables() + 1, 0);
+    test_lits.resize(num_variables());
+    viewed_lits.resize(num_variables() + 1);</span>
+
+<span style = "background-color:#dfd">	unsigned stack_ofs = stack_.top().literal_stack_ofs();
+	unsigned num_curr_lits = 0;
+	while (stack_ofs &lt; literal_stack_.size()) {
+		test_lits.clear();
+		for (auto it = literal_stack_.begin() + stack_ofs;
+				it != literal_stack_.end(); it++) {
+			for (auto cl_ofs : occurrence_lists_[it-&gt;neg()])
+				if (!isSatisfied(cl_ofs)) {
+					for (auto lt = beginOf(cl_ofs); *lt != SENTINEL_LIT; lt++)
+						if (isActive(*lt) &amp;&amp; !viewed_lits[lt-&gt;neg()]) {
+							test_lits.push_back(lt-&gt;neg());
+							viewed_lits[lt-&gt;neg()] = true;</span>
+
+<span style = "background-color:#dfd">						}
+				}
+		}
+		num_curr_lits = literal_stack_.size() - stack_ofs;
+		stack_ofs = literal_stack_.size();
+		for (auto jt = test_lits.begin(); jt != test_lits.end(); jt++)
+			viewed_lits[*jt] = false;</span>
+
+<span style = "background-color:#dfd">		vector&lt;float&gt; scores;
+		scores.clear();
+		for (auto jt = test_lits.begin(); jt != test_lits.end(); jt++) {
+			scores.push_back(literal(*jt).activity_score_);
+		}
+		sort(scores.begin(), scores.end());
+		num_curr_lits = 10 + num_curr_lits / 20;
+		float threshold = 0.0;
+		if (scores.size() &gt; num_curr_lits) {
+			threshold = scores[scores.size() - num_curr_lits];</span>
+		}
+
+<span style = "background-color:#dfd">		statistics_.num_failed_literal_tests_ += test_lits.size();</span>
+
+<span style = "background-color:#dfd">		for (auto lit : test_lits)
+			if (isActive(lit) &amp;&amp; threshold &lt;= literal(lit).activity_score_) {
+				unsigned sz = literal_stack_.size();</span>
+				// we increase the decLev artificially
+				// s.t. after the tentative BCP call, we can learn a conflict clause
+				// relative to the assignment of *jt
+<span style = "background-color:#dfd">				stack_.startFailedLitTest();
+				setLiteralIfFree(lit);</span>
+
+<span style = "background-color:#dfd">				assert(!hasAntecedent(lit));</span>
+
+<span style = "background-color:#dfd">				bool bSucceeded = BCP(sz);
+				if (!bSucceeded)
+					recordAllUIPCauses();</span>
+
+<span style = "background-color:#dfd">				stack_.stopFailedLitTest();</span>
+
+<span style = "background-color:#dfd">				while (literal_stack_.size() &gt; sz) {
+					unSet(literal_stack_.back());
+					literal_stack_.pop_back();
+				}</span>
+
+<span style = "background-color:#dfd">				if (!bSucceeded) {
+					statistics_.num_failed_literals_detected_++;
+					sz = literal_stack_.size();
+					for (auto it = uip_clauses_.rbegin();
+							it != uip_clauses_.rend(); it++) {</span>
+						// DEBUG
+<span style = "background-color:#dfd">						if (it-&gt;size() == 0 &amp;&amp; config_.verbose)</span>
+<span style = "background-color:#fdd">							cout &lt;&lt; "EMPTY CLAUSE FOUND" &lt;&lt; endl;</span>
+						// END DEBUG
+<span style = "background-color:#dfd">						setLiteralIfFree(it-&gt;front(),</span>
+								addUIPConflictClause(*it));
+<span style = "background-color:#dfd">					}
+					if (!BCP(sz))
+						return false;</span>
+				}
+<span style = "background-color:#dfd">			}
+	}</span>
+
+	// BEGIN TEST
+//	float max_score = -1;
+//	float score;
+//	unsigned max_score_var = 0;
+//	for (auto it =
+//			component_analyzer_.superComponentOf(stack_.top()).varsBegin();
+//			*it != varsSENTINEL; it++)
+//		if (isActive(*it)) {
+//			score = scoreOf(*it);
+//			if (score &gt; max_score) {
+//				max_score = score;
+//				max_score_var = *it;
+//			}
+//		}
+//	LiteralID theLit(max_score_var,
+//			literal(LiteralID(max_score_var, true)).activity_score_
+//					&gt; literal(LiteralID(max_score_var, false)).activity_score_);
+//	if (!fail_test(theLit.neg())) {
+//		cout &lt;&lt; ".";
+//
+//		statistics_.num_failed_literals_detected_++;
+//		unsigned sz = literal_stack_.size();
+//		for (auto it = uip_clauses_.rbegin(); it != uip_clauses_.rend(); it++) {
+//			setLiteralIfFree(it-&gt;front(), addUIPConflictClause(*it));
+//		}
+//		if (!BCP(sz))
+//			return false;
+//
+//	}
+	// END
+<span style = "background-color:#dfd">	return true;
+}</span>
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// BEGIN module conflictAnalyzer
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+void Solver::minimizeAndStoreUIPClause(LiteralID uipLit,
+		vector&lt;LiteralID&gt; &amp; tmp_clause,
+<span style = "background-color:#dfd">		const VariableIndexedVector&lt;bool&gt;&amp; seen) {
+	static deque&lt;LiteralID&gt; clause;
+	clause.clear();
+	assertion_level_ = 0;
+	for (auto lit : tmp_clause) {
+		if (existsUnitClauseOf(lit.var()))</span>
+<span style = "background-color:#fdd">			continue;</span>
+<span style = "background-color:#dfd">		bool resolve_out = false;
+		if (hasAntecedent(lit)) {
+			resolve_out = true;
+			if (getAntecedent(lit).isAClause()) {
+				for (auto it = beginOf(getAntecedent(lit).asCl()) + 1;
+						*it != SENTINEL_LIT; it++)
+					if (!seen[it-&gt;var()]) {
+						resolve_out = false;
+						break;
+					}
+			} else if (!seen[getAntecedent(lit).asLit().var()]) {
+				resolve_out = false;</span>
+			}
+		}
+
+<span style = "background-color:#dfd">		if (!resolve_out) {</span>
+			// uipLit should be the sole literal of this Decision Level
+<span style = "background-color:#dfd">			if (var(lit).decision_level &gt;= assertion_level_) {
+				assertion_level_ = var(lit).decision_level;
+				clause.push_front(lit);
+			} else
+				clause.push_back(lit);</span>
+		}
+<span style = "background-color:#dfd">	}</span>
+
+<span style = "background-color:#dfd">	if(uipLit.var() != VariableIndex(0))
+	 assert(var(uipLit).decision_level == stack_.get_decision_level());</span>
+
+	//assert(uipLit.var() != 0);
+<span style = "background-color:#dfd">	if (uipLit.var() != VariableIndex(0))
+		clause.push_front(uipLit);
+	uip_clauses_.push_back(vector&lt;LiteralID&gt;(clause.begin(), clause.end()));
+}</span>
+
+<span style = "background-color:#dfd">void Solver::recordLastUIPCauses() {</span>
+// note:
+// variables of lower dl: if seen we dont work with them anymore
+// variables of this dl: if seen we incorporate their
+// antecedent and set to unseen
+
+    // ToDo:: This can cause some slowdown because of allocations.
+    //        If this proves problematic, we can cache the allocation,
+    //        as the number of variables should remain constant after init
+<span style = "background-color:#dfd">    VariableIndexedVector&lt;bool&gt; seen(num_variables() + 1);</span>
+
+<span style = "background-color:#dfd">	static vector&lt;LiteralID&gt; tmp_clause;
+	tmp_clause.clear();</span>
+
+<span style = "background-color:#dfd">	assertion_level_ = 0;
+	uip_clauses_.clear();</span>
+
+<span style = "background-color:#dfd">	unsigned lit_stack_ofs = literal_stack_.size();
+	int DL = stack_.get_decision_level();
+	unsigned lits_at_current_dl = 0;</span>
+
+<span style = "background-color:#dfd">	for (auto l : violated_clause) {
+		if (var(l).decision_level == 0 || existsUnitClauseOf(l.var()))
+			continue;
+		if (var(l).decision_level &lt; DL)
+			tmp_clause.push_back(l);
+		else
+			lits_at_current_dl++;
+		literal(l).increaseActivity();
+		seen[l.var()] = true;
+	}</span>
+
+<span style = "background-color:#dfd">	LiteralID curr_lit;
+	while (lits_at_current_dl) {
+		assert(lit_stack_ofs != 0);
+		curr_lit = literal_stack_[--lit_stack_ofs];</span>
+
+<span style = "background-color:#dfd">		if (!seen[curr_lit.var()])
+			continue;</span>
+
+<span style = "background-color:#dfd">		seen[curr_lit.var()] = false;</span>
+
+<span style = "background-color:#dfd">		if (lits_at_current_dl-- == 1) {</span>
+			// perform UIP stuff
+<span style = "background-color:#dfd">			if (!hasAntecedent(curr_lit)) {</span>
+				// this should be the decision literal when in first branch
+				// or it is a literal decided to explore in failed literal testing
+				//assert(stack_.TOS_decLit() == curr_lit);
+//				cout &lt;&lt; "R" &lt;&lt; curr_lit.toInt() &lt;&lt; "S"
+//				     &lt;&lt; var(curr_lit).ante.isAnt() &lt;&lt; " "  &lt;&lt; endl;
+<span style = "background-color:#dfd">				break;</span>
+			}
+		}
+
+<span style = "background-color:#dfd">		assert(hasAntecedent(curr_lit));</span>
+
+		//cout &lt;&lt; "{" &lt;&lt; curr_lit.toInt() &lt;&lt; "}";
+<span style = "background-color:#dfd">		if (getAntecedent(curr_lit).isAClause()) {
+			updateActivities(getAntecedent(curr_lit).asCl());
+			assert(curr_lit == *beginOf(getAntecedent(curr_lit).asCl()));</span>
+
+<span style = "background-color:#dfd">			for (auto it = beginOf(getAntecedent(curr_lit).asCl()) + 1;
+					*it != SENTINEL_LIT; it++) {</span>
+				if (seen[it-&gt;var()] || (var(*it).decision_level == 0)
+<span style = "background-color:#dfd">						|| existsUnitClauseOf(it-&gt;var()))
+					continue;
+				if (var(*it).decision_level &lt; DL)
+					tmp_clause.push_back(*it);
+				else
+					lits_at_current_dl++;
+				seen[it-&gt;var()] = true;
+			}
+		} else {
+			LiteralID alit = getAntecedent(curr_lit).asLit();
+			literal(alit).increaseActivity();
+			literal(curr_lit).increaseActivity();</span>
+			if (!seen[alit.var()] &amp;&amp; !(var(alit).decision_level == 0)
+<span style = "background-color:#dfd">					&amp;&amp; !existsUnitClauseOf(alit.var())) {
+				if (var(alit).decision_level &lt; DL)
+					tmp_clause.push_back(alit);
+				else
+					lits_at_current_dl++;
+				seen[alit.var()] = true;</span>
+			}
+		}
+<span style = "background-color:#dfd">		curr_lit = NOT_A_LIT;
+	}</span>
+
+//	cout &lt;&lt; "T" &lt;&lt; curr_lit.toInt() &lt;&lt; "U "
+//     &lt;&lt; var(curr_lit).decision_level &lt;&lt; ", " &lt;&lt; stack_.get_decision_level() &lt;&lt; endl;
+//	cout &lt;&lt; "V"  &lt;&lt; var(curr_lit).ante.isAnt() &lt;&lt; " "  &lt;&lt; endl;
+<span style = "background-color:#dfd">	minimizeAndStoreUIPClause(curr_lit.neg(), tmp_clause, seen);</span>
+
+//	if (var(curr_lit).decision_level &gt; assertion_level_)
+//		assertion_level_ = var(curr_lit).decision_level;
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">void Solver::recordAllUIPCauses() {</span>
+// note:
+// variables of lower dl: if seen we dont work with them anymore
+// variables of this dl: if seen we incorporate their
+// antecedent and set to unseen
+    // ToDo:: This can cause some slowdown because of allocations.
+    //        If this proves problematic, we can cache the allocation,
+    //        as the number of variables should remain constant after init
+<span style = "background-color:#dfd">    VariableIndexedVector&lt;bool&gt; seen(num_variables() + 1);</span>
+
+<span style = "background-color:#dfd">	static vector&lt;LiteralID&gt; tmp_clause;
+	tmp_clause.clear();</span>
+
+<span style = "background-color:#dfd">	assertion_level_ = 0;
+	uip_clauses_.clear();</span>
+
+<span style = "background-color:#dfd">	unsigned lit_stack_ofs = literal_stack_.size();
+	int DL = stack_.get_decision_level();
+	unsigned lits_at_current_dl = 0;</span>
+
+<span style = "background-color:#dfd">	for (auto l : violated_clause) {
+		if (var(l).decision_level == 0 || existsUnitClauseOf(l.var()))
+			continue;
+		if (var(l).decision_level &lt; DL)
+			tmp_clause.push_back(l);
+		else
+			lits_at_current_dl++;
+		literal(l).increaseActivity();
+		seen[l.var()] = true;
+	}
+	unsigned n = 0;
+	LiteralID curr_lit;
+	while (lits_at_current_dl) {
+		assert(lit_stack_ofs != 0);
+		curr_lit = literal_stack_[--lit_stack_ofs];</span>
+
+<span style = "background-color:#dfd">		if (!seen[curr_lit.var()])
+			continue;</span>
+
+<span style = "background-color:#dfd">		seen[curr_lit.var()] = false;</span>
+
+<span style = "background-color:#dfd">		if (lits_at_current_dl-- == 1) {
+			n++;
+			if (!hasAntecedent(curr_lit)) {</span>
+				// this should be the decision literal when in first branch
+				// or it is a literal decided to explore in failed literal testing
+				//assert(stack_.TOS_decLit() == curr_lit);
+<span style = "background-color:#dfd">				break;</span>
+			}
+			// perform UIP stuff
+<span style = "background-color:#dfd">			minimizeAndStoreUIPClause(curr_lit.neg(), tmp_clause, seen);</span>
+		}
+
+<span style = "background-color:#dfd">		assert(hasAntecedent(curr_lit));</span>
+
+<span style = "background-color:#dfd">		if (getAntecedent(curr_lit).isAClause()) {
+			updateActivities(getAntecedent(curr_lit).asCl());
+			assert(curr_lit == *beginOf(getAntecedent(curr_lit).asCl()));</span>
+
+<span style = "background-color:#dfd">			for (auto it = beginOf(getAntecedent(curr_lit).asCl()) + 1;
+					*it != SENTINEL_LIT; it++) {</span>
+				if (seen[it-&gt;var()] || (var(*it).decision_level == 0)
+<span style = "background-color:#dfd">						|| existsUnitClauseOf(it-&gt;var()))
+					continue;
+				if (var(*it).decision_level &lt; DL)
+					tmp_clause.push_back(*it);
+				else
+					lits_at_current_dl++;
+				seen[it-&gt;var()] = true;
+			}
+		} else {
+			LiteralID alit = getAntecedent(curr_lit).asLit();
+			literal(alit).increaseActivity();
+			literal(curr_lit).increaseActivity();</span>
+			if (!seen[alit.var()] &amp;&amp; !(var(alit).decision_level == 0)
+<span style = "background-color:#dfd">					&amp;&amp; !existsUnitClauseOf(alit.var())) {
+				if (var(alit).decision_level &lt; DL)</span>
+<span style = "background-color:#fdd">					tmp_clause.push_back(alit);
+				else</span>
+<span style = "background-color:#dfd">					lits_at_current_dl++;
+				seen[alit.var()] = true;</span>
+			}
+		}
+<span style = "background-color:#dfd">	}
+	if (!hasAntecedent(curr_lit)) {
+		minimizeAndStoreUIPClause(curr_lit.neg(), tmp_clause, seen);</span>
+	}
+//	if (var(curr_lit).decision_level &gt; assertion_level_)
+//		assertion_level_ = var(curr_lit).decision_level;
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#dfd">void Solver::printOnlineStats() {
+	if (config_.quiet)</span>
+<span style = "background-color:#fdd">		return;</span>
+
+<span style = "background-color:#dfd">	if(config_.verbose) {</span>
+<span style = "background-color:#fdd">	  cout &lt;&lt; endl;
+	  cout &lt;&lt; "time elapsed: " &lt;&lt; stopwatch_.getElapsedSeconds() &lt;&lt; "s" &lt;&lt; endl;
+	  cout &lt;&lt; "conflict clauses (all / bin / unit) \t";
+	  cout &lt;&lt; num_conflict_clauses();
+	  cout &lt;&lt; "/" &lt;&lt; statistics_.num_binary_conflict_clauses_ &lt;&lt; "/"</span>
+	      &lt;&lt; unit_clauses_.size() &lt;&lt; endl;
+<span style = "background-color:#fdd">	  cout &lt;&lt; "failed literals found by implicit BCP \t "</span>
+	      &lt;&lt; statistics_.num_failed_literals_detected_ &lt;&lt; endl;
+	  ;
+
+<span style = "background-color:#fdd">	  cout &lt;&lt; "implicit BCP miss rate \t "</span>
+	      &lt;&lt; statistics_.implicitBCP_miss_rate() * 100 &lt;&lt; "%";
+<span style = "background-color:#fdd">	  cout &lt;&lt; endl;</span>
+
+<span style = "background-color:#fdd">	  comp_manager_.gatherStatistics();</span>
+
+<span style = "background-color:#fdd">	  cout &lt;&lt; "cache size " &lt;&lt; statistics_.cache_MB_memory_usage()	&lt;&lt; "MB" &lt;&lt; endl;
+	  cout &lt;&lt; "components (stored / hits) \t\t"</span>
+	      &lt;&lt; statistics_.cached_component_count() &lt;&lt; "/"
+	      &lt;&lt; statistics_.cache_hits() &lt;&lt; endl;
+<span style = "background-color:#fdd">	  cout &lt;&lt; "avg. variable count (stored / hits) \t"</span>
+	      &lt;&lt; statistics_.getAvgComponentSize() &lt;&lt; "/"
+	      &lt;&lt; statistics_.getAvgCacheHitSize();
+<span style = "background-color:#fdd">	  cout &lt;&lt; endl;
+	  cout &lt;&lt; "cache miss rate " &lt;&lt; statistics_.cache_miss_rate() * 100 &lt;&lt; "%"</span>
+	      &lt;&lt; endl;
+	}
+<span style = "background-color:#dfd">}</span>
+
+} // sharpSAT namespace</pre>
+	</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>cacheable_component.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * cacheable_component.h
+ *
+ *  Created on: Feb 21, 2013
+ *      Author: mthurley
+ */
+
+#ifndef SHARP_SAT_CACHEABLE_COMPONENT_H_
+#define SHARP_SAT_CACHEABLE_COMPONENT_H_
+
+#include &lt;assert.h&gt;
+#include &lt;vector&gt;
+
+#include &lt;sharpSAT/primitive_types.h&gt;
+#include &lt;sharpSAT/component_types/difference_packed_component.h&gt;
+
+namespace sharpSAT {
+
+class Component;
+class ComponentArchetype;
+
+
+// GenericCacheableComponent Adds Structure to PackedComponent that is
+// necessary to store it in the cache
+// namely, the descendant tree structure that
+// allows for the removal of cache pollutions
+
+template&lt; class T_Component&gt;
+class GenericCacheableComponent: public T_Component {
+public:
+<span style = "background-color:#dfd">  GenericCacheableComponent() {
+  }</span>
+
+  GenericCacheableComponent(Component &amp;comp) :
+<span style = "background-color:#dfd">      T_Component(comp) {
+  }</span>
+
+<span style = "background-color:#dfd">  unsigned long SizeInBytes() const {
+    return sizeof(GenericCacheableComponent&lt;T_Component&gt;)</span>
+        + T_Component::raw_data_byte_size();
+<span style = "background-color:#dfd">  }</span>
+
+  // the 48 = 16*3 in overhead stems from the three parts of the component
+  // being dynamically allocated (i.e. the GenericCacheableComponent itself,
+  // the data_ and the model_count data
+<span style = "background-color:#dfd">  unsigned long sys_overhead_SizeInBytes() const {
+      return sizeof(GenericCacheableComponent&lt;T_Component&gt;)</span>
+          + T_Component::sys_overhead_raw_data_byte_size()
+         // + 24;
+          +48;
+<span style = "background-color:#dfd">    }</span>
+
+  // BEGIN Cache Pollution Management
+
+<span style = "background-color:#dfd">  void set_father(CacheEntryID f) {
+    father_ = f;
+  }
+  CacheEntryID father() const {
+    return father_;
+  }</span>
+
+<span style = "background-color:#dfd">  void set_next_sibling(CacheEntryID sibling) {
+    next_sibling_ = sibling;
+  }
+  CacheEntryID next_sibling() {
+    return next_sibling_;
+  }</span>
+
+<span style = "background-color:#dfd">  void set_first_descendant(CacheEntryID descendant) {
+    first_descendant_ = descendant;
+  }
+  CacheEntryID first_descendant() {
+    return first_descendant_;
+  }</span>
+
+
+
+<span style = "background-color:#dfd">  void set_next_bucket_element(CacheEntryID entry) {
+    next_bucket_element_ = entry;
+  }</span>
+
+<span style = "background-color:#dfd">  CacheEntryID next_bucket_element() {
+      return next_bucket_element_;
+  }</span>
+
+private:
+
+<span style = "background-color:#dfd">  CacheEntryID next_bucket_element_ = 0;</span>
+
+  // theFather and theDescendants:
+  // each CCacheEntry is a Node in a tree which represents the relationship
+  // of the components stored
+<span style = "background-color:#dfd">  CacheEntryID father_ = 0;
+  CacheEntryID first_descendant_ = 0;
+  CacheEntryID next_sibling_ = 0;</span>
+
+};
+
+
+
+typedef GenericCacheableComponent&lt;DifferencePackedComponent&gt; CacheableComponent;
+//typedef GenericCacheableComponent&lt;SimplePackedComponent&gt; CacheableComponent;
+} // sharpSAT namespace
+#endif /* CACHEABLE_COMPONENT_H_ */</pre>
+	</body>
+</html>

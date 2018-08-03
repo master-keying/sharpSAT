@@ -1,0 +1,261 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>solver.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * solver.h
+ *
+ *  Created on: Aug 23, 2012
+ *      Author: marc
+ */
+
+#ifndef SHARP_SAT_SOLVER_H_
+#define SHARP_SAT_SOLVER_H_
+
+
+#include &lt;sharpSAT/statistics.h&gt;
+#include &lt;sharpSAT/instance.h&gt;
+#include &lt;sharpSAT/component_management.h&gt;
+#include &lt;sharpSAT/solver_config.h&gt;
+#include &lt;sharpSAT/stopwatch.h&gt;
+
+namespace sharpSAT {
+
+enum class retStateT {
+	EXIT, RESOLVED, PROCESS_COMPONENT, BACKTRACK
+};
+
+class Solver: public Instance {
+public:
+<span style = "background-color:#dfd">	Solver() {
+		stopwatch_.setTimeBound(config_.time_bound_seconds);
+	}</span>
+
+	/**
+	 * Attempts to solve the #SAT instance.
+	 *
+	 * The instance must be loaded via the \ref Instance public API
+	 * (\ref Instance::initialize, \ref Instance::add_clause and
+	 * \ref Instance::finalize).
+	 *
+	 * Time-limit in seconds can be set by `setTimeBound()`.
+	 *
+	 * Calculation result can be found in `statistics().exit_state_`
+	 * and `statistics().final_solution_count()`.
+	 */
+	void solve();
+
+	void load_and_solve(const std::string &amp; file_name);
+
+<span style = "background-color:#dfd">	SolverConfiguration &amp;config() {
+		return config_;
+	}</span>
+
+<span style = "background-color:#fdd">	DataAndStatistics &amp;statistics() {
+	        return statistics_;
+	}</span>
+<span style = "background-color:#dfd">	void setTimeBound(long int i) {
+		config().time_bound_seconds = i;
+		stopwatch_.setTimeBound(i);
+	}</span>
+
+private:
+	SolverConfiguration config_;
+
+	DecisionStack stack_; // decision stack
+	std::vector&lt;LiteralID&gt; literal_stack_;
+
+	StopWatch stopwatch_;
+
+<span style = "background-color:#dfd">	ComponentManager comp_manager_ = ComponentManager(config_,</span>
+			statistics_, literal_values_);
+
+	// the last time conflict clauses have been deleted
+<span style = "background-color:#dfd">	unsigned long last_ccl_deletion_time_ = 0;</span>
+	// the last time the conflict clause storage has been compacted
+<span style = "background-color:#dfd">	unsigned long last_ccl_cleanup_time_ = 0;</span>
+
+	bool simplePreProcess();
+	bool prepFailedLiteralTest();
+	// we assert that the formula is consistent
+	// and has not been found UNSAT yet
+	// hard wires all assertions in the literal stack into the formula
+	// removes all set variables and essentially reinitiallizes all
+	// further data
+	void HardWireAndCompact();
+
+	SOLVER_StateT countSAT();
+
+	void decideLiteral();
+	bool bcp();
+
+
+	 void decayActivitiesOf(Component &amp; comp) {
+	   for (auto it = comp.varsBegin(); it-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL; it++) {
+	          literal(LiteralID(it-&gt;get&lt;VariableIndex&gt;(), true)).activity_score_ *=0.5;
+	          literal(LiteralID(it-&gt;get&lt;VariableIndex&gt;(), false)).activity_score_ *=0.5;
+	       }
+	}
+	///  this method performs Failed literal tests online
+	bool implicitBCP();
+
+	// this is the actual BCP algorithm
+	// starts propagating all literal in literal_stack_
+	// beginingg at offset start_at_stack_ofs
+	bool BCP(size_t start_at_stack_ofs);
+
+	retStateT backtrack();
+
+	// if on the current decision level
+	// a second branch can be visited, RESOLVED is returned
+	// otherwise returns BACKTRACK
+	retStateT resolveConflict();
+
+	/////////////////////////////////////////////
+	//  BEGIN small helper functions
+	/////////////////////////////////////////////
+
+<span style = "background-color:#dfd">	float scoreOf(VariableIndex v) {
+		float score = comp_manager_.scoreOf(v);
+		score += 10.0 * literal(LiteralID(v, true)).activity_score_;
+		score += 10.0 * literal(LiteralID(v, false)).activity_score_;</span>
+//		score += (10*stack_.get_decision_level()) * literal(LiteralID(v, true)).activity_score_;
+//		score += (10*stack_.get_decision_level()) * literal(LiteralID(v, false)).activity_score_;
+
+<span style = "background-color:#dfd">		return score;
+	}</span>
+
+	bool setLiteralIfFree(LiteralID lit,
+<span style = "background-color:#dfd">			Antecedent ant = Antecedent(NOT_A_CLAUSE)) {
+		if (literal_values_[lit] != TriValue::X_TRI)
+			return false;
+		var(lit).decision_level = stack_.get_decision_level();
+		var(lit).ante = ant;
+		literal_stack_.push_back(lit);
+		if (ant.isAClause() &amp;&amp; ant.asCl() != NOT_A_CLAUSE)
+			getHeaderOf(ant.asCl()).increaseScore();
+		literal_values_[lit] = TriValue::T_TRI;
+		literal_values_[lit.neg()] = TriValue::F_TRI;
+		return true;
+	}</span>
+
+	void printOnlineStats();
+
+	void print(std::vector&lt;LiteralID&gt; &amp;vec);
+	void print(std::vector&lt;unsigned&gt; &amp;vec);
+
+
+<span style = "background-color:#dfd">	void setConflictState(LiteralID litA, LiteralID litB) {
+		violated_clause.clear();
+		violated_clause.push_back(litA);
+		violated_clause.push_back(litB);
+	}
+	void setConflictState(ClauseOfs cl_ofs) {
+		getHeaderOf(cl_ofs).increaseScore();
+		violated_clause.clear();
+		for (auto it = beginOf(cl_ofs); *it != SENTINEL_LIT; it++)
+			violated_clause.push_back(*it);
+	}</span>
+
+<span style = "background-color:#dfd">	std::vector&lt;LiteralID&gt;::const_iterator TOSLiteralsBegin() {
+		return literal_stack_.begin() + stack_.top().literal_stack_ofs();
+	}</span>
+
+<span style = "background-color:#dfd">	void initStack(unsigned int resSize) {
+		stack_.clear();
+		stack_.reserve(resSize);
+		literal_stack_.clear();
+		literal_stack_.reserve(resSize);</span>
+		// initialize the stack to contain at least level zero
+<span style = "background-color:#dfd">		stack_.push_back(StackLevel(1, 0, 2));
+		stack_.back().changeBranch();
+	}</span>
+
+<span style = "background-color:#dfd">	const LiteralID &amp;TOS_decLit() {
+		assert(stack_.top().literal_stack_ofs() &lt; literal_stack_.size());
+		return literal_stack_[stack_.top().literal_stack_ofs()];
+	}</span>
+
+<span style = "background-color:#dfd">	void reactivateTOS() {
+		for (auto it = TOSLiteralsBegin(); it != literal_stack_.end(); it++)
+			unSet(*it);
+		comp_manager_.cleanRemainingComponentsOf(stack_.top());
+		literal_stack_.resize(stack_.top().literal_stack_ofs());
+		stack_.top().resetRemainingComps();
+	}</span>
+
+	bool fail_test(LiteralID lit) {
+		size_t sz = literal_stack_.size();
+		// we increase the decLev artificially
+		// s.t. after the tentative BCP call, we can learn a conflict clause
+		// relative to the assignment of *jt
+		stack_.startFailedLitTest();
+		setLiteralIfFree(lit);
+
+		assert(!hasAntecedent(lit));
+
+		bool bSucceeded = BCP(sz);
+		if (!bSucceeded)
+			recordAllUIPCauses();
+
+		stack_.stopFailedLitTest();
+
+		while (literal_stack_.size() &gt; sz) {
+			unSet(literal_stack_.back());
+			literal_stack_.pop_back();
+		}
+		return bSucceeded;
+	}
+	/////////////////////////////////////////////
+	//  BEGIN conflict analysis
+	/////////////////////////////////////////////
+
+	// if the state name is CONFLICT,
+	// then violated_clause contains the clause determining the conflict;
+	std::vector&lt;LiteralID&gt; violated_clause;
+	// this is an array of all the clauses found
+	// during the most recent conflict analysis
+	// it might contain more than 2 clauses
+	// but always will have:
+	//      uip_clauses_.front() the 1UIP clause found
+	//      uip_clauses_.back() the lastUIP clause found
+	//  possible clauses in between will be other UIP clauses
+	std::vector&lt;std::vector&lt;LiteralID&gt; &gt; uip_clauses_;
+
+	// the assertion level of uip_clauses_.back()
+	// or (if the decision variable did not have an antecedent
+	// before) then assertionLevel_ == DL;
+<span style = "background-color:#dfd">	int assertion_level_ = 0;</span>
+
+	// build conflict clauses from most recent conflict
+	// as stored in state_.violated_clause
+	// solver state must be CONFLICT to work;
+	// this first method record only the last UIP clause
+	// so as to create clause that asserts the current decision
+	// literal
+	void recordLastUIPCauses();
+	void recordAllUIPCauses();
+
+	void minimizeAndStoreUIPClause(LiteralID uipLit,
+			std::vector&lt;LiteralID&gt; &amp; tmp_clause,
+			const VariableIndexedVector&lt;bool&gt;&amp; seen);
+	void storeUIPClause(LiteralID uipLit, std::vector&lt;LiteralID&gt; &amp; tmp_clause);
+	int getAssertionLevel() const {
+		return assertion_level_;
+	}
+
+	/////////////////////////////////////////////
+	//  END conflict analysis
+	/////////////////////////////////////////////
+};
+} // sharpSAT namespace
+#endif /* SOLVER_H_ */</pre>
+	</body>
+</html>

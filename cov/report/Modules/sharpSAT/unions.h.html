@@ -1,0 +1,180 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>unions.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * unions.h
+ *
+ *  Created on: Jun 12, 2018
+ *      Author: Radomir Cernoch
+ */
+
+#ifndef SHARP_SAT_UNIONS_H_
+#define SHARP_SAT_UNIONS_H_
+
+#include &lt;sharpSAT/structures.h&gt;
+
+#include &lt;type_traits&gt;
+#include &lt;functional&gt;
+#include &lt;limits&gt;
+#include &lt;tuple&gt;
+
+
+namespace sharpSAT {
+
+namespace { // tools for Variant
+
+  //! Finds the index of `Needle` within `Head,Tail` (termination)
+  template&lt;size_t Acc, class Needle, class Head, class... Tail&gt;
+  static constexpr typename std::enable_if&lt;
+    std::is_same&lt;Needle,Head&gt;::value,
+<span style = "background-color:#dfd">  unsigned char&gt;::type variant_find_type() {</span>
+    static_assert(Acc &lt;= std::numeric_limits&lt;unsigned char&gt;::max(),
+      "variant takes at most numeric_limits&lt;unsigned char&gt;::max() types");
+<span style = "background-color:#dfd">    return static_cast&lt;unsigned char&gt;(Acc);
+  }</span>
+
+  //! Finds the index of `Needle` within `Head,Tail` (recursive call)
+  template&lt;size_t Acc, class Needle, class Head, class... Tail&gt;
+  static constexpr typename std::enable_if&lt;
+    ! std::is_same&lt;Needle,Head&gt;::value,
+<span style = "background-color:#dfd">  unsigned char&gt;::type variant_find_type() {
+    return variant_find_type&lt;Acc + 1, Needle, Tail...&gt;();
+  }</span>
+
+
+
+  //! Is one class-list a prefix-list of another class-list
+  template &lt;typename ...A&gt;
+  struct is_prefix : std::false_type { };
+
+  //! Is one class-list a prefix-list of another class-list
+  template &lt;typename A1, typename ...Aother, typename B1, typename ...Bother&gt;
+  struct is_prefix&lt;std::tuple&lt;A1, Aother...&gt;, std::tuple&lt;B1, Bother...&gt;&gt; {
+    static const bool value = std::is_same&lt;A1, B1&gt;::value
+                           &amp;&amp; is_prefix&lt;std::tuple&lt;Aother...&gt;,
+                                        std::tuple&lt;Bother...&gt;&gt;::value;
+  };
+
+  //! Is one class-list a prefix-list of another class-list
+  template &lt;typename ...B&gt;
+  struct is_prefix&lt;std::tuple&lt;&gt;, std::tuple&lt;B...&gt;&gt; : std::true_type { };
+}
+
+template&lt;class... Ts&gt;
+struct ReleaseVariant {
+
+  //! Construct the variant by casting to `unsigned`
+  template&lt;class T&gt; ReleaseVariant(T object)
+<span style = "background-color:#dfd">  : data(static_cast&lt;unsigned&gt;(object)) {}</span>
+
+  //! Copy constructor of uneven types
+  template&lt;class... ProtoTs&gt;
+  ReleaseVariant(const ReleaseVariant&lt;ProtoTs...&gt;&amp; prototype)
+  : data(prototype.data) {
+    static_assert(is_prefix&lt;std::tuple&lt;ProtoTs...&gt;, std::tuple&lt;Ts...&gt;&gt;::value,
+      "If the prototype's variants are not a subclass of this variant's,"
+      " we can't match the type_id (in Debug mode).");
+  }
+
+  //! Raw constructor avoids all means of type-checking
+  ReleaseVariant(unsigned data, size_t) : data(data) {}
+
+  //! Construct the typed value and check the type (in debug mode)
+	template&lt;class T&gt; T get() const	{
+		return T(data);
+	}
+
+  //! Raw conversion avoids all means of type-checking
+<span style = "background-color:#dfd">  explicit operator unsigned() const {
+    return data;
+  }</span>
+
+protected:
+
+  //! Value contained by this variant
+	unsigned data;
+
+  //! Let ReleaseVariant access \ref data if template args mismatch.
+  template&lt;class... FriendTs&gt;
+  friend class ReleaseVariant;
+}; // ReleaseVariant
+
+
+
+template&lt;class... Ts&gt;
+struct DebugVariant : public ReleaseVariant&lt;Ts...&gt; {
+
+  //! Construct the variant and store the type (in debug mode)
+  template&lt;class T&gt;
+	DebugVariant(T object)
+<span style = "background-color:#dfd">  : ReleaseVariant&lt;Ts...&gt;(object)
+  , type_id(variant_find_type&lt;0,T,Ts...&gt;())
+  {}</span>
+
+  //! Copy constructor works only if \ref type_id does match
+  template&lt;class... ProtoTs&gt;
+  DebugVariant(const DebugVariant&lt;ProtoTs...&gt;&amp; prototype)
+<span style = "background-color:#dfd">  : ReleaseVariant&lt;Ts...&gt;(static_cast&lt;unsigned&gt;(prototype))
+  , type_id(prototype.type_id)
+  {</span>
+    static_assert(is_prefix&lt;std::tuple&lt;ProtoTs...&gt;, std::tuple&lt;Ts...&gt;&gt;::value,
+      "If the prototype's variants are not a subclass of this variant's,"
+      " we can't match the type_id (in Debug mode).");
+<span style = "background-color:#dfd">  }</span>
+
+  /*!
+   * Raw constructor avoids all means of type-checking.
+   *
+   * Only use, if the `type_id` matches the type of the value.
+   */
+  DebugVariant(unsigned data, size_t type_id)
+  : ReleaseVariant&lt;Ts...&gt;(data, type_id)
+  , type_id(type_id)
+  {}
+
+  //! Construct the typed value and check the type (in debug mode)
+<span style = "background-color:#dfd">	template&lt;class T&gt; T get() const	{
+		assert((type_id == variant_find_type&lt;0,T,Ts...&gt;())</span>
+      &amp;&amp; "Variant was written a different type than is being read.");
+<span style = "background-color:#dfd">		return T(ReleaseVariant&lt;Ts...&gt;::data);
+	}</span>
+
+protected:
+
+  //! Index of the current type within `Ts`
+	unsigned char type_id;
+
+  //! Check if the expected type is the one
+  void assert_type_matches(unsigned char expected_type) const
+  {
+    assert(type_id == expected_type
+      &amp;&amp; "Trying to extract a wrong type from the variant");
+	}
+
+  //! Let DebugVariant access \ref type_id if template args mismatch.
+  template&lt;class... FriendTs&gt;
+  friend struct DebugVariant;
+}; // DebugVariant
+
+
+
+#if !defined(NDEBUG)
+template&lt;class... Ts&gt;
+using Variant = DebugVariant&lt;Ts...&gt;;
+#else
+template&lt;class... Ts&gt;
+using Variant = ReleaseVariant&lt;Ts...&gt;;
+#endif
+
+} // sharpSAT namespace
+#endif // SHARP_SAT_UNIONS_H_</pre>
+	</body>
+</html>

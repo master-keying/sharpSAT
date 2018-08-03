@@ -1,0 +1,96 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>main.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+#include &lt;sharpSAT/solver.h&gt;
+
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+
+using namespace std;
+using namespace sharpSAT;
+
+<span style = "background-color:#dfd">int main(int argc, char *argv[]) {</span>
+
+<span style = "background-color:#dfd">  string input_file;
+  Solver theSolver;</span>
+
+
+<span style = "background-color:#dfd">  if (argc &lt;= 1) {</span>
+<span style = "background-color:#fdd">    cout &lt;&lt; "Usage: sharpSAT [options] [CNF_File]" &lt;&lt; endl;
+    cout &lt;&lt; "Options: " &lt;&lt; endl;
+    cout &lt;&lt; "\t -noPP  \t turn off preprocessing" &lt;&lt; endl;
+    cout &lt;&lt; "\t -q     \t quiet mode" &lt;&lt; endl;
+    cout &lt;&lt; "\t -v     \t verbose mode" &lt;&lt; endl;
+    cout &lt;&lt; "\t -t [s] \t set time bound to s seconds" &lt;&lt; endl;
+    cout &lt;&lt; "\t -noCC  \t turn off component caching" &lt;&lt; endl;
+    cout &lt;&lt; "\t -cs [n]\t set max cache size to n MB" &lt;&lt; endl;
+    cout &lt;&lt; "\t -noIBCP\t turn off implicit BCP" &lt;&lt; endl;
+    cout &lt;&lt; "\t" &lt;&lt; endl;</span>
+
+<span style = "background-color:#fdd">    return -1;</span>
+  }
+
+<span style = "background-color:#dfd">  for (int i = 1; i &lt; argc; i++) {
+    if (strcmp(argv[i], "-noCC") == 0)</span>
+<span style = "background-color:#fdd">      theSolver.config().perform_component_caching = false;</span>
+<span style = "background-color:#dfd">    if (strcmp(argv[i], "-noIBCP") == 0)</span>
+<span style = "background-color:#fdd">      theSolver.config().perform_failed_lit_test = false;</span>
+<span style = "background-color:#dfd">    if (strcmp(argv[i], "-noPP") == 0)
+      theSolver.config().perform_pre_processing = false;
+    else if (strcmp(argv[i], "-q") == 0)</span>
+<span style = "background-color:#fdd">      theSolver.config().quiet = true;</span>
+<span style = "background-color:#dfd">    else if (strcmp(argv[i], "-v") == 0)</span>
+<span style = "background-color:#fdd">      theSolver.config().verbose = true;</span>
+<span style = "background-color:#dfd">    else if (strcmp(argv[i], "-t") == 0) {
+      if (argc &lt;= i + 1) {</span>
+<span style = "background-color:#fdd">        cout &lt;&lt; " wrong parameters" &lt;&lt; endl;
+        return -1;</span>
+      }
+<span style = "background-color:#dfd">      theSolver.setTimeBound(atol(argv[i + 1]));
+      if (theSolver.config().verbose)</span>
+<span style = "background-color:#fdd">        cout &lt;&lt; "time bound set to " &lt;&lt; theSolver.config().time_bound_seconds &lt;&lt; "s\n";</span>
+<span style = "background-color:#dfd">     } else if (strcmp(argv[i], "-cs") == 0) {</span>
+<span style = "background-color:#fdd">      if (argc &lt;= i + 1) {
+        cout &lt;&lt; " wrong parameters" &lt;&lt; endl;
+        return -1;</span>
+      }
+<span style = "background-color:#fdd">      theSolver.statistics().maximum_cache_size_bytes_ = atol(argv[i + 1]) * (uint64_t) 1000000;
+    } else</span>
+<span style = "background-color:#dfd">      input_file = argv[i];
+  }</span>
+
+<span style = "background-color:#dfd">  theSolver.load_and_solve(input_file);</span>
+
+//  cout &lt;&lt; sizeof(LiteralID)&lt;&lt;"MALLOC_STATS:" &lt;&lt; endl;
+//  malloc_stats();
+
+//  rusage ru;
+//  getrusage(RUSAGE_SELF,&amp;ru);
+//
+//   cout &lt;&lt; "\nRus: " &lt;&lt;  ru.ru_maxrss*1024 &lt;&lt; endl;
+//  cout &lt;&lt; "\nMALLINFO:" &lt;&lt; endl;
+//
+//  cout &lt;&lt; "total " &lt;&lt; mallinfo().arena + mallinfo().hblkhd &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().arena &lt;&lt; "non-mmapped space allocated from system " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().ordblks &lt;&lt; "number of free chunks " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().smblks&lt;&lt; "number of fastbin blocks " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().hblks&lt;&lt; " number of mmapped regions " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().hblkhd&lt;&lt; "space in mmapped regions " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().usmblks&lt;&lt; " maximum total allocated space " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().fsmblks&lt;&lt; "space available in freed fastbin blocks " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().uordblks&lt;&lt; " total allocated space " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().fordblks&lt;&lt; "total free space " &lt;&lt; endl;
+//  cout &lt;&lt;  mallinfo().keepcost&lt;&lt; " top-most, releasable (via malloc_trim) space " &lt;&lt; endl;
+<span style = "background-color:#dfd">  return 0;
+}</span></pre>
+	</body>
+</html>

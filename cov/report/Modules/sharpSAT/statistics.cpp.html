@@ -1,0 +1,123 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>statistics.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * statistics.cpp
+ *
+ *  Created on: Feb 13, 2013
+ *      Author: mthurley
+ */
+
+#include &lt;sharpSAT/statistics.h&gt;
+
+#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+
+using namespace std;
+
+namespace sharpSAT {
+
+<span style = "background-color:#dfd">void DataAndStatistics::print_final_solution_count() {</span>
+
+<span style = "background-color:#dfd">  if (exit_state_ == SOLVER_StateT::SUCCESS) {
+      cout &lt;&lt; final_solution_count_.get_str();</span>
+
+<span style = "background-color:#dfd">  } else if (exit_state_ == SOLVER_StateT::TIMEOUT) {
+      cout &lt;&lt; "TIMEOUT";</span>
+
+<span style = "background-color:#dfd">  } else {</span>
+<span style = "background-color:#fdd">      cout &lt;&lt; "UNKNOWN RESULT";</span>
+  }
+<span style = "background-color:#dfd">}</span>
+
+<span style = "background-color:#fdd">void DataAndStatistics::writeToFile(const string &amp; file_name) {
+  ofstream out(file_name, ios_base::app);
+  unsigned pos = input_file_.find_last_of("/\\");
+  out &lt;&lt; "&lt;tr&gt;" &lt;&lt; endl;
+  out &lt;&lt; "&lt;td&gt;" &lt;&lt; input_file_.substr(pos + 1) &lt;&lt; "&lt;/td&gt;" &lt;&lt; endl;
+  out &lt;&lt; "&lt;td&gt;" &lt;&lt; num_original_variables_ &lt;&lt; "&lt;/td&gt;" &lt;&lt; endl;
+  out &lt;&lt; "&lt;td&gt;" &lt;&lt; num_original_clauses_ &lt;&lt; "&lt;/td&gt;" &lt;&lt; endl;
+  out &lt;&lt; "&lt;td&gt;" &lt;&lt; num_decisions_ &lt;&lt; "&lt;/td&gt;" &lt;&lt; endl;
+  out &lt;&lt; "&lt;td&gt;" &lt;&lt; time_elapsed_ &lt;&lt; "&lt;/td&gt;" &lt;&lt; endl;</span>
+
+<span style = "background-color:#fdd">  string s = final_solution_count_.get_str();
+  if (final_solution_count_ == 0)
+    s = "UNSAT";
+  out &lt;&lt; "&lt;td&gt;" &lt;&lt; s &lt;&lt; "&lt;/td&gt;" &lt;&lt; endl;
+  out &lt;&lt; "&lt;/tr&gt;" &lt;&lt; endl;
+}</span>
+
+<span style = "background-color:#fdd">void DataAndStatistics::printShort() {
+  if (exit_state_ == SOLVER_StateT::TIMEOUT) {
+    cout &lt;&lt; endl &lt;&lt; " TIMEOUT !" &lt;&lt; endl;
+    return;</span>
+  }
+<span style = "background-color:#fdd">  cout &lt;&lt; endl &lt;&lt; endl;
+  cout &lt;&lt; "variables (total / active / free)\t" &lt;&lt; num_variables_ &lt;&lt; "/"</span>
+      &lt;&lt; num_used_variables_ &lt;&lt; "/" &lt;&lt; num_variables_ - num_used_variables_
+      &lt;&lt; endl;
+<span style = "background-color:#fdd">  cout &lt;&lt; "clauses (removed) \t\t\t" &lt;&lt; num_original_clauses_ &lt;&lt; " ("</span>
+      &lt;&lt; num_original_clauses_ - num_clauses() &lt;&lt; ")" &lt;&lt; endl;
+<span style = "background-color:#fdd">  cout &lt;&lt; "decisions \t\t\t\t" &lt;&lt; num_decisions_ &lt;&lt; endl;
+  cout &lt;&lt; "conflicts \t\t\t\t" &lt;&lt; num_conflicts_ &lt;&lt; endl;
+  cout &lt;&lt; "conflict clauses (all/bin/unit) \t";
+  cout &lt;&lt; num_conflict_clauses();
+  cout &lt;&lt; "/" &lt;&lt; num_binary_conflict_clauses_ &lt;&lt; "/" &lt;&lt; num_unit_clauses_</span>
+      &lt;&lt; endl &lt;&lt; endl;
+<span style = "background-color:#fdd">  cout &lt;&lt; "failed literals found by implicit BCP \t "</span>
+      &lt;&lt; num_failed_literals_detected_ &lt;&lt; endl;
+
+
+<span style = "background-color:#fdd">  cout &lt;&lt; "implicit BCP miss rate \t " &lt;&lt; implicitBCP_miss_rate() * 100 &lt;&lt; "%";
+  cout &lt;&lt; endl;
+  cout &lt;&lt; "bytes cache size     \t" &lt;&lt; cache_bytes_memory_usage()  &lt;&lt; "\t"</span>
+      &lt;&lt; endl;
+
+<span style = "background-color:#fdd">  cout &lt;&lt; "bytes cache (overall) \t" &lt;&lt; overall_cache_bytes_memory_stored()</span>
+      &lt;&lt; "" &lt;&lt; endl;
+<span style = "background-color:#fdd">  cout &lt;&lt; "bytes cache (infra / comps) "</span>
+      &lt;&lt; (cache_infrastructure_bytes_memory_usage_) &lt;&lt; "/"
+      &lt;&lt; sum_bytes_cached_components_  &lt;&lt; "\t" &lt;&lt; endl;
+
+<span style = "background-color:#fdd">  cout &lt;&lt; "bytes pure comp data (curr)    " &lt;&lt; sum_bytes_pure_cached_component_data_  &lt;&lt; "" &lt;&lt; endl;
+  cout &lt;&lt; "bytes pure comp data (overall) " &lt;&lt;overall_bytes_pure_stored_component_data_ &lt;&lt; "" &lt;&lt; endl;</span>
+
+<span style = "background-color:#fdd">  cout &lt;&lt; "bytes cache with sysoverh (curr)    " &lt;&lt; sys_overhead_sum_bytes_cached_components_  &lt;&lt; "" &lt;&lt; endl;
+  cout &lt;&lt; "bytes cache with sysoverh (overall) " &lt;&lt; sys_overhead_overall_bytes_components_stored_ &lt;&lt; "" &lt;&lt; endl;</span>
+
+
+<span style = "background-color:#fdd">  cout &lt;&lt; "cache (stores / hits) \t\t\t" &lt;&lt; num_cached_components_ &lt;&lt; "/"</span>
+      &lt;&lt; num_cache_hits_ &lt;&lt; endl;
+<span style = "background-color:#fdd">  cout &lt;&lt; "cache miss rate " &lt;&lt; cache_miss_rate() * 100 &lt;&lt; "%" &lt;&lt; endl;
+  cout &lt;&lt; "avg. variable count (stores / hits) \t" &lt;&lt; getAvgComponentSize()</span>
+      &lt;&lt; "/" &lt;&lt; getAvgCacheHitSize() &lt;&lt; endl &lt;&lt; endl;
+<span style = "background-color:#fdd">  cout &lt;&lt; "\n# solutions " &lt;&lt; endl;</span>
+
+<span style = "background-color:#fdd">  print_final_solution_count();</span>
+
+<span style = "background-color:#fdd">  cout &lt;&lt; "\n# END" &lt;&lt; endl &lt;&lt; endl;
+  cout &lt;&lt; "time: " &lt;&lt; time_elapsed_ &lt;&lt; "s\n\n";
+}</span>
+
+<span style = "background-color:#fdd">void DataAndStatistics::printShortFormulaInfo() {
+  std::cout &lt;&lt; "variables (all/used/free): \t";
+  std::cout &lt;&lt; num_variables_ &lt;&lt; "/" &lt;&lt; num_used_variables_ &lt;&lt; "/";
+  std::cout &lt;&lt; num_variables_ - num_used_variables_ &lt;&lt; std::endl;</span>
+
+<span style = "background-color:#fdd">  std::cout &lt;&lt; "clauses (all/long/binary/unit): ";
+  std::cout &lt;&lt; num_clauses() &lt;&lt; "/" &lt;&lt; num_long_clauses_;
+  std::cout &lt;&lt; "/" &lt;&lt; num_binary_clauses_ &lt;&lt; "/" &lt;&lt; num_unit_clauses_ &lt;&lt; std::endl;
+}</span>
+
+
+} // sharpSAT namespace</pre>
+	</body>
+</html>

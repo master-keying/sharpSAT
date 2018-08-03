@@ -1,0 +1,224 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>base_packed_component.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * base_packed_component.h
+ *
+ *  Created on: Feb 5, 2013
+ *      Author: mthurley
+ */
+
+#ifndef SHARP_SAT_BASE_PACKED_COMPONENT_H_
+#define SHARP_SAT_BASE_PACKED_COMPONENT_H_
+
+#include &lt;sharpSAT/primitive_types.h&gt;
+
+#include &lt;assert.h&gt;
+#include &lt;cstddef&gt;
+#include &lt;gmpxx.h&gt;
+
+namespace sharpSAT {
+
+template &lt;class T&gt;
+ class BitStuffer {
+ public:
+<span style = "background-color:#dfd">  BitStuffer(T *data):data_start_(data),p(data){
+    *p = 0;
+  }</span>
+
+<span style = "background-color:#dfd">  void stuff(const unsigned val, const unsigned num_bits_val){</span>
+      // assert(num_bits_val &gt; 0);
+      // assert((val &gt;&gt; num_bits_val) == 0);
+<span style = "background-color:#dfd">      if(end_of_bits_ == 0)
+        *p = 0;
+      assert((*p &gt;&gt; end_of_bits_) == 0);
+      *p |= val &lt;&lt; end_of_bits_;
+      end_of_bits_ += num_bits_val;
+      if (end_of_bits_ &gt; _bits_per_block){</span>
+        //assert(*p);
+<span style = "background-color:#dfd">        end_of_bits_ -= _bits_per_block;
+        *(++p) = val &gt;&gt; (num_bits_val - end_of_bits_);
+        assert(!(end_of_bits_ == 0) | (*p == 0));</span>
+      }
+<span style = "background-color:#dfd">      else if (end_of_bits_ == _bits_per_block){
+        end_of_bits_ -= _bits_per_block;
+        p++;</span>
+      }
+<span style = "background-color:#dfd">  }</span>
+
+<span style = "background-color:#dfd">  void assert_size(unsigned size){
+    if(end_of_bits_ == 0)
+       p--;
+    assert(p - data_start_ == size - 1);
+  }</span>
+
+ private:
+  T *data_start_ = nullptr;
+  T *p = nullptr;
+  // in the current block
+  // the bit postion just after the last bit written
+<span style = "background-color:#dfd">  unsigned end_of_bits_ = 0;</span>
+
+  static const unsigned _bits_per_block = (sizeof(T) &lt;&lt; 3);
+
+};
+
+
+class BasePackedComponent {
+public:
+<span style = "background-color:#dfd">  static unsigned bits_per_variable() {
+    return _bits_per_variable;
+  }
+  static unsigned variable_mask() {
+      return _variable_mask;
+  }
+  static unsigned bits_per_clause() {
+    return _bits_per_clause;
+  }</span>
+
+<span style = "background-color:#dfd">  static unsigned bits_per_block(){
+	  return _bits_per_block;
+  }</span>
+
+<span style = "background-color:#dfd">  static unsigned bits_of_data_size(){
+    return _bits_of_data_size;
+  }</span>
+
+  static void adjustPackSize(VariableIndex maxVarId, ClauseIndex maxClId);
+
+<span style = "background-color:#dfd">  BasePackedComponent() {}</span>
+  BasePackedComponent(unsigned creation_time): creation_time_(creation_time) {}
+
+<span style = "background-color:#dfd">  ~BasePackedComponent() {
+    if (data_)
+      delete[] data_;
+  }</span>
+  static void outbit(unsigned v);
+
+
+<span style = "background-color:#dfd">  static unsigned log2(unsigned v){</span>
+         // taken from
+         // http://graphics.stanford.edu/~seander/bithacks.html#IntegerLogLookup
+         static const char LogTable256[256] =
+         {
+         #define SHARP_SAT_LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
+             -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+             SHARP_SAT_LT(4), SHARP_SAT_LT(5), SHARP_SAT_LT(5),
+             SHARP_SAT_LT(6), SHARP_SAT_LT(6), SHARP_SAT_LT(6),
+             SHARP_SAT_LT(6), SHARP_SAT_LT(7), SHARP_SAT_LT(7),
+             SHARP_SAT_LT(7), SHARP_SAT_LT(7), SHARP_SAT_LT(7),
+             SHARP_SAT_LT(7), SHARP_SAT_LT(7), SHARP_SAT_LT(7)
+         };
+
+         unsigned r;     // r will be lg(v)
+         unsigned int t, tt; // temporaries
+
+<span style = "background-color:#dfd">         if ((tt = (v &gt;&gt; 16)))</span>
+         {
+<span style = "background-color:#fdd">           r = (t = (tt &gt;&gt; 8)) ? 24 + LogTable256[t] : 16 + LogTable256[tt];</span>
+         }
+<span style = "background-color:#fdd">         else</span>
+         {
+<span style = "background-color:#dfd">           r = (t = (v &gt;&gt; 8)) ? 8 + LogTable256[t] : LogTable256[v];</span>
+         }
+<span style = "background-color:#dfd">         return r;
+  }</span>
+
+<span style = "background-color:#fdd">  unsigned creation_time() {
+    return creation_time_;
+  }</span>
+
+<span style = "background-color:#dfd">  const mpz_class &amp;model_count() const {
+    return model_count_;
+  }</span>
+
+<span style = "background-color:#fdd">  unsigned alloc_of_model_count() const{
+        return sizeof(mpz_class)</span>
+               + model_count_.get_mpz_t()-&gt;_mp_alloc * sizeof(mp_limb_t);
+<span style = "background-color:#fdd">  }</span>
+
+<span style = "background-color:#dfd">  void set_creation_time(unsigned time) {
+    creation_time_ = time;
+  }</span>
+
+<span style = "background-color:#dfd">  void set_model_count(const mpz_class &amp;rn, unsigned time) {
+    model_count_ = rn;
+    length_solution_period_and_flags_ = (time - creation_time_) | (length_solution_period_and_flags_ &amp; 1);
+  }</span>
+
+<span style = "background-color:#dfd">  unsigned hashkey() const  {
+    return hashkey_;
+  }</span>
+
+<span style = "background-color:#fdd">  bool modelCountFound(){
+    return (length_solution_period_and_flags_ &gt;&gt; 1);
+  }</span>
+
+ // inline bool equals(const BasePackedComponent &amp;comp) const;
+
+  // a cache entry is deletable
+  // only if it is not connected to an active
+  // component in the component stack
+<span style = "background-color:#fdd">  bool isDeletable() const {
+    return length_solution_period_and_flags_ &amp; 1;
+  }</span>
+<span style = "background-color:#dfd">  void set_deletable() {
+    length_solution_period_and_flags_ |= 1;
+  }</span>
+
+  void clear() {
+    // before deleting the contents of this component,
+    // we should make sure that this component is not present in the component stack anymore!
+    assert(isDeletable());
+    if (data_)
+      delete[] data_;
+    data_ = nullptr;
+  }
+
+  static unsigned _debug_static_val;
+
+protected:
+  // data_ contains in packed form the variable indices
+  // and clause indices of the component ordered
+  // structure is
+  // var var ... clause clause ...
+  // clauses begin at clauses_ofs_
+<span style = "background-color:#dfd">  unsigned* data_ = nullptr;</span>
+
+<span style = "background-color:#dfd">  unsigned hashkey_ = 0;</span>
+
+  mpz_class model_count_;
+
+<span style = "background-color:#dfd">  unsigned creation_time_ = 1;</span>
+
+
+  // this is:  length_solution_period = length_solution_period_and_flags_ &gt;&gt; 1
+  // length_solution_period == 0 means unsolved
+  // and the first bit is "delete_permitted"
+<span style = "background-color:#dfd">  unsigned length_solution_period_and_flags_ = 0;</span>
+
+  // deletion is permitted only after
+  // the copy of this component in the stack
+  // does not exist anymore
+
+
+protected:
+  static unsigned _bits_per_clause, _bits_per_variable; // bitsperentry
+  static unsigned _bits_of_data_size; // number of bits needed to store the data size
+  static unsigned _data_size_mask;
+  static unsigned _variable_mask, _clause_mask;
+  static const unsigned _bits_per_block= (sizeof(unsigned) &lt;&lt; 3);
+
+};
+} // sharpSAT namespace
+#endif /* BASE_PACKED_COMPONENT_H_ */</pre>
+	</body>
+</html>

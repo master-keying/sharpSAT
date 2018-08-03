@@ -1,0 +1,92 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta charset="utf-8"/>
+        <title>sharpSAT.exe</title>
+        <link rel="stylesheet" type="text/css" href="third-party/css/style.css"/>
+        <script src="third-party/RGraph/libraries/RGraph.common.core.js" type="text/javascript"></script>
+        <script src="third-party/RGraph/libraries/RGraph.common.dynamic.js" type="text/javascript"></script>
+        <script src="third-party/RGraph/libraries/RGraph.common.tooltips.js" type="text/javascript"></script>
+        <script src="third-party/RGraph/libraries/RGraph.pie.js" type="text/javascript"></script>
+        <script src="third-party/JQuery/jquery-1.11.1.min.js"></script>
+    </head>
+    <body>
+    <script type="text/javascript">
+        $(document).ready(function ()
+        {
+            
+            new RGraph.Pie('pi_270f6b2e-9475-47a0-a10a-c9f6f4e57bc3', [2036, 343])
+                .set('labels', ['Cover 85%','Uncover 15%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 2036 lines (85%)', 'uncover 343 lines (15%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+            new RGraph.Pie('pi_aeddf8dd-e3ad-435f-b83f-032d4fda12bf', [2036, 343])
+                .set('labels', ['Cover 85%','Uncover 15%'])
+                .set('colors', ['rgb(0,255,0)','rgb(255,0,0)'])
+                .set('linewidth', 1)
+                .set('shadow', true)
+                .set('tooltips', ['cover 2036 lines (85%)', 'uncover 343 lines (15%)'])
+                .set('tooltips.event', 'onmousemove')
+                .set('labels.sticks', true)
+                .set('labels.sticks.length', 10)
+                .draw();
+            
+
+      })
+    </script>    
+        <h1>
+        sharpSAT.exe
+        </h1>
+        <h4>
+        Warning: Your program has exited with error code: 3
+        </h4>
+        <table id="rounded-corner">
+            <thead>
+                <tr>
+                    <th scope="col" class="rounded-left">Coverage</th>
+                    <th scope="col">Total lines</th>
+                    <th scope="col" class="rounded-right">Items</th>
+                </tr>
+            </thead> 
+            <tbody>
+                
+                <tr>
+                    <td>
+            <canvas id="pi_270f6b2e-9475-47a0-a10a-c9f6f4e57bc3" width="280" height="100">Cover 85%</canvas>
+                    </td>            
+                    <td>2379</td>
+                    <td>            
+                      
+                      sharpSAT.exe
+                      
+                    </td>
+                </tr>        
+                
+                <tr>
+                    <td>
+            <canvas id="pi_aeddf8dd-e3ad-435f-b83f-032d4fda12bf" width="280" height="100">Cover 85%</canvas>
+                    </td>            
+                    <td>2379</td>
+                    <td>            
+                       <a href="Modules/sharpSAT.html">X:\sharpSAT\coverage\windows\Debug\sharpSAT.exe</a> 
+                      
+                      
+                    </td>
+                </tr>        
+                
+            </tbody>
+            <tfoot>
+                <tr>
+                <td colspan="2" class="rounded-foot-left"></td>
+                <td class="rounded-foot-right"></td>
+                </tr>
+            </tfoot>            
+        </table>
+    </body>
+</html>

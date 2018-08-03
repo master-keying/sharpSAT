@@ -1,0 +1,62 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>base_packed_component.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * base_packed_component.cpp
+ *
+ *  Created on: Feb 4, 2013
+ *      Author: mthurley
+ */
+#include &lt;sharpSAT/component_types/base_packed_component.h&gt;
+#include &lt;math.h&gt;
+#include &lt;iostream&gt;
+
+namespace sharpSAT {
+
+unsigned BasePackedComponent::_bits_per_clause = 0;
+unsigned BasePackedComponent::_bits_per_variable = 0; // bitsperentry
+unsigned BasePackedComponent::_variable_mask = 0;
+unsigned BasePackedComponent::_clause_mask = 0; // bitsperentry
+unsigned BasePackedComponent::_debug_static_val=0;
+unsigned BasePackedComponent::_bits_of_data_size=0;
+unsigned BasePackedComponent::_data_size_mask = 0;
+
+
+void BasePackedComponent::adjustPackSize(VariableIndex maxVarId,
+<span style = "background-color:#dfd">    ClauseIndex maxClId) {</span>
+
+<span style = "background-color:#dfd">  _bits_per_variable = log2(static_cast&lt;unsigned&gt;(maxVarId)) + 1;
+  _bits_per_clause   = log2(static_cast&lt;unsigned&gt;(maxClId)) + 1;</span>
+
+<span style = "background-color:#dfd">  _bits_of_data_size = log2(static_cast&lt;unsigned&gt;(maxVarId)</span>
+                          + static_cast&lt;unsigned&gt;(maxClId) ) + 1;
+
+<span style = "background-color:#dfd">  _variable_mask = _clause_mask = _data_size_mask = 0;
+  for (unsigned int i = 0; i &lt; _bits_per_variable; i++)
+    _variable_mask = (_variable_mask &lt;&lt; 1) + 1;
+  for (unsigned int i = 0; i &lt; _bits_per_clause; i++)
+    _clause_mask = (_clause_mask &lt;&lt; 1) + 1;
+  for (unsigned int i = 0; i &lt; _bits_of_data_size; i++)
+    _data_size_mask = (_data_size_mask &lt;&lt; 1) + 1;
+}</span>
+
+<span style = "background-color:#fdd">void BasePackedComponent::outbit(unsigned v){
+    for(auto i = 0; i &lt; 32; ++i) {
+        std::cout &lt;&lt; ((v&amp;2147483648)? "1" : "0");
+        v &amp;= 2147483648-1;
+        v &lt;&lt;= 1;
+    }
+}</span>
+
+
+} // sharpSAT namespace</pre>
+	</body>
+</html>

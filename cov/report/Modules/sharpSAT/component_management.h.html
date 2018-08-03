@@ -1,0 +1,164 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>component_management.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * component_management.h
+ *
+ *  Created on: Aug 23, 2012
+ *      Author: Marc Thurley
+ */
+
+#ifndef SHARP_SAT_COMPONENT_MANAGEMENT_H_
+#define SHARP_SAT_COMPONENT_MANAGEMENT_H_
+
+
+
+#include &lt;sharpSAT/alt_component_analyzer.h&gt;
+#include &lt;sharpSAT/component_cache.h&gt;
+#include &lt;sharpSAT/containers.h&gt;
+#include &lt;sharpSAT/stack.h&gt;
+#include &lt;sharpSAT/solver_config.h&gt;
+#include &lt;sharpSAT/component_types/component.h&gt;
+
+#include &lt;vector&gt;
+#include &lt;cstddef&gt;
+#include &lt;gmpxx.h&gt;
+
+namespace sharpSAT {
+
+typedef AltComponentAnalyzer ComponentAnalyzer;
+
+class ComponentManager {
+public:
+  ComponentManager(SolverConfiguration &amp;config, DataAndStatistics &amp;statistics,
+        LiteralIndexedVector&lt;TriValue&gt; &amp; lit_values) :
+<span style = "background-color:#dfd">        config_(config), cache_(statistics),
+        ana_(lit_values) {
+  }</span>
+
+  void initialize(LiteralIndexedVector&lt;Literal&gt; &amp; literals,
+        std::vector&lt;LiteralID&gt; &amp;lit_pool);
+
+<span style = "background-color:#dfd">  unsigned scoreOf(VariableIndex v) {
+      return ana_.scoreOf(v);
+  }</span>
+
+<span style = "background-color:#dfd">  void cacheModelCountOf(unsigned stack_comp_id, const mpz_class &amp;value) {
+    if (config_.perform_component_caching)
+      cache_.storeValueOf(component_stack_[stack_comp_id]-&gt;id(), value);
+  }</span>
+
+<span style = "background-color:#dfd">  Component &amp; superComponentOf(StackLevel &amp;lev) {
+    assert(component_stack_.size() &gt; lev.super_component());
+    return *component_stack_[lev.super_component()];
+  }</span>
+
+<span style = "background-color:#dfd">  unsigned component_stack_size() {
+    return component_stack_.size();
+  }</span>
+
+<span style = "background-color:#dfd">  void cleanRemainingComponentsOf(StackLevel &amp;top) {
+    while (component_stack_.size() &gt; top.remaining_components_ofs()) {
+      if (cache_.hasEntry(component_stack_.back()-&gt;id()))
+        cache_.entry(component_stack_.back()-&gt;id()).set_deletable();
+      delete component_stack_.back();
+      component_stack_.pop_back();
+    }
+    assert(top.remaining_components_ofs() &lt;= component_stack_.size());
+  }</span>
+
+  Component &amp; currentRemainingComponentOf(StackLevel &amp;top) {
+    assert(component_stack_.size() &gt; top.currentRemainingComponent());
+    return *component_stack_[top.currentRemainingComponent()];
+  }
+
+  // checks for the next yet to explore remaining component of top
+  // returns true if a non-trivial non-cached component
+  // has been found and is now stack_.TOS_NextComp()
+  // returns false if all components have been processed;
+  inline bool findNextRemainingComponentOf(StackLevel &amp;top);
+
+  inline void recordRemainingCompsFor(StackLevel &amp;top);
+
+  inline void sortComponentStackRange(size_t start, size_t end);
+
+<span style = "background-color:#dfd">  void gatherStatistics(){</span>
+//     statistics_.cache_bytes_memory_usage_ =
+//	     cache_.recompute_bytes_memory_usage();
+<span style = "background-color:#dfd">    cache_.compute_byte_size_infrasture();
+  }</span>
+
+  void removeAllCachePollutionsOf(StackLevel &amp;top);
+
+private:
+
+  SolverConfiguration &amp;config_;
+
+  std::vector&lt;Component *&gt; component_stack_;
+  ComponentCache cache_;
+  ComponentAnalyzer ana_;
+};
+
+
+<span style = "background-color:#dfd">void ComponentManager::sortComponentStackRange(size_t start, size_t end){
+    assert(start &lt;= end);</span>
+    // sort the remaining components for processing
+<span style = "background-color:#dfd">    for (size_t i = start; i &lt; end; i++)
+      for (size_t j = i + 1; j &lt; end; j++) {</span>
+        if (component_stack_[i]-&gt;num_variables()
+<span style = "background-color:#dfd">            &lt; component_stack_[j]-&gt;num_variables())
+          std::swap(component_stack_[i], component_stack_[j]);
+      }
+  }</span>
+
+<span style = "background-color:#dfd">bool ComponentManager::findNextRemainingComponentOf(StackLevel &amp;top) {</span>
+    // record Remaining Components if there are none!
+<span style = "background-color:#dfd">    if (component_stack_.size() &lt;= top.remaining_components_ofs())
+      recordRemainingCompsFor(top);
+    assert(!top.branch_found_unsat());
+    if (top.hasUnprocessedComponents())
+      return true;</span>
+    // if no component remains
+    // make sure, at least that the current branch is considered SAT
+<span style = "background-color:#dfd">    top.includeSolution(1);
+    return false;
+  }</span>
+
+
+<span style = "background-color:#dfd">void ComponentManager::recordRemainingCompsFor(StackLevel &amp;top) {
+   Component &amp; super_comp = superComponentOf(top);
+   size_t new_comps_start_ofs = component_stack_.size();</span>
+
+<span style = "background-color:#dfd">   ana_.setupAnalysisContext(top, super_comp);</span>
+
+<span style = "background-color:#dfd">   for (auto vt = super_comp.varsBegin(); vt-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL; vt++)
+     if (ana_.isUnseenAndActive(vt-&gt;get&lt;VariableIndex&gt;()) &amp;&amp;</span>
+         ana_.exploreRemainingCompOf(vt-&gt;get&lt;VariableIndex&gt;())) {
+
+<span style = "background-color:#dfd">       Component *p_new_comp = ana_.makeComponentFromArcheType();
+       CacheableComponent *packed_comp = new CacheableComponent(ana_.getArchetype().current_comp_for_caching_);
+         if (!cache_.manageNewComponent(top, *packed_comp)){
+            component_stack_.push_back(p_new_comp);
+            p_new_comp-&gt;set_id(cache_.storeAsEntry(*packed_comp, super_comp.id()));</span>
+         }
+<span style = "background-color:#dfd">         else {
+           delete packed_comp;
+           delete p_new_comp;</span>
+         }
+<span style = "background-color:#dfd">     }</span>
+
+<span style = "background-color:#dfd">   top.set_unprocessed_components_end(component_stack_.size());
+   sortComponentStackRange(new_comps_start_ofs, component_stack_.size());
+}</span>
+} // sharpSAT namespace
+#endif /* COMPONENT_MANAGEMENT_H_ */</pre>
+	</body>
+</html>

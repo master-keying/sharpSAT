@@ -1,0 +1,68 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>component_management.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * component_management.cpp
+ *
+ *  Created on: Aug 23, 2012
+ *      Author: Marc Thurley
+ */
+
+#include &lt;sharpSAT/component_management.h&gt;
+
+using namespace std;
+
+namespace sharpSAT {
+
+void ComponentManager::initialize(LiteralIndexedVector&lt;Literal&gt; &amp; literals,
+<span style = "background-color:#dfd">    vector&lt;LiteralID&gt; &amp;lit_pool) {</span>
+
+<span style = "background-color:#dfd">  ana_.initialize(literals, lit_pool);</span>
+  // BEGIN CACHE INIT
+<span style = "background-color:#dfd">  CacheableComponent::adjustPackSize(ana_.max_variable_id(), ana_.max_clause_id());</span>
+
+<span style = "background-color:#dfd">  component_stack_.clear();
+  component_stack_.reserve(static_cast&lt;unsigned&gt;(ana_.max_variable_id()) + 2);
+  component_stack_.push_back(new Component());
+  component_stack_.push_back(new Component());
+  assert(component_stack_.size() == 2);
+  component_stack_.back()-&gt;createAsDummyComponent(ana_.max_variable_id(),</span>
+      ana_.max_clause_id());
+
+
+<span style = "background-color:#dfd">  cache_.init(*component_stack_.back(), config_);
+}</span>
+
+
+<span style = "background-color:#dfd">void ComponentManager::removeAllCachePollutionsOf(StackLevel &amp;top) {</span>
+  // all processed components are found in
+  // [top.currentRemainingComponent(), component_stack_.size())
+  // first, remove the list of descendants from the father
+<span style = "background-color:#dfd">  assert(top.remaining_components_ofs() &lt;= component_stack_.size());
+  assert(top.super_component() != 0);
+  assert(cache_.hasEntry(superComponentOf(top).id()));</span>
+
+<span style = "background-color:#dfd">  if (top.remaining_components_ofs() == component_stack_.size())
+    return;</span>
+
+<span style = "background-color:#dfd">  for (unsigned u = top.remaining_components_ofs(); u &lt; component_stack_.size();
+      u++) {
+    assert(cache_.hasEntry(component_stack_[u]-&gt;id()));
+    cache_.cleanPollutionsInvolving(component_stack_[u]-&gt;id());
+  }</span>
+
+#ifdef DEBUG
+  cache_.test_descendantstree_consistency();
+#endif
+<span style = "background-color:#dfd">}</span>
+} // sharpSAT namespace</pre>
+	</body>
+</html>

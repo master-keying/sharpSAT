@@ -1,0 +1,208 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>primitive_types.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * primitive_types.h
+ *
+ *  Created on: Feb 5, 2013
+ *      Author: mthurley
+ */
+
+#ifndef SHARP_SAT_PRIMITIVE_TYPES_H_
+#define SHARP_SAT_PRIMITIVE_TYPES_H_
+
+#include &lt;limits&gt;
+#include &lt;cassert&gt;
+
+namespace sharpSAT {
+
+struct VariableIndex {
+  unsigned var_id_;
+
+public:
+  VariableIndex() : var_id_(0) {}
+<span style = "background-color:#dfd">  explicit VariableIndex(unsigned var_id) : var_id_(var_id) {}</span>
+
+<span style = "background-color:#dfd">  explicit operator unsigned() const { return var_id_; }</span>
+
+  bool operator ==(const VariableIndex&amp; rhs) const
+<span style = "background-color:#dfd">  { return var_id_ == rhs.var_id_; }</span>
+
+  bool operator !=(const VariableIndex&amp; rhs) const
+<span style = "background-color:#dfd">  { return var_id_ != rhs.var_id_; }</span>
+
+  bool operator &lt;(const VariableIndex&amp; rhs) const
+<span style = "background-color:#dfd">  { return var_id_ &lt; rhs.var_id_; }</span>
+
+  bool operator &gt;(const VariableIndex&amp; rhs) const
+  { return var_id_ &gt; rhs.var_id_; }
+
+  bool operator &lt;=(const VariableIndex&amp; rhs) const
+<span style = "background-color:#dfd">  { return var_id_ &lt;= rhs.var_id_; }</span>
+
+  bool operator &gt;=(const VariableIndex&amp; rhs) const
+  { return var_id_ &gt;= rhs.var_id_; }
+
+<span style = "background-color:#dfd">  VariableIndex&amp; operator ++() {
+    ++var_id_;
+    return *this;
+  }</span>
+
+  VariableIndex operator ++(int) {
+    auto before = *this;
+    ++var_id_;
+    return before;
+  }
+
+  VariableIndex&amp; operator --() {
+    --var_id_;
+    return *this;
+  }
+
+  VariableIndex operator --(int) {
+    auto before = *this;
+    --var_id_;
+    return before;
+  }
+};
+
+<span style = "background-color:#dfd">static const VariableIndex varsSENTINEL(0);</span>
+
+
+
+struct ClauseIndex {
+  unsigned clause_index_;
+
+public:
+  ClauseIndex() : clause_index_(0) {}
+<span style = "background-color:#dfd">  explicit ClauseIndex(unsigned var_id) : clause_index_(var_id) {}</span>
+
+<span style = "background-color:#dfd">  explicit operator unsigned() const { return clause_index_; }</span>
+
+  bool operator ==(const ClauseIndex&amp; rhs) const
+  { return clause_index_ == rhs.clause_index_; }
+
+  bool operator !=(const ClauseIndex&amp; rhs) const
+<span style = "background-color:#dfd">  { return clause_index_ != rhs.clause_index_; }</span>
+
+  bool operator &lt;(const ClauseIndex&amp; rhs) const
+  { return clause_index_ &lt; rhs.clause_index_; }
+
+  bool operator &gt;(const ClauseIndex&amp; rhs) const
+  { return clause_index_ &gt; rhs.clause_index_; }
+
+  bool operator &lt;=(const ClauseIndex&amp; rhs) const
+<span style = "background-color:#dfd">  { return clause_index_ &lt;= rhs.clause_index_; }</span>
+
+  bool operator &gt;=(const ClauseIndex&amp; rhs) const
+  { return clause_index_ &gt;= rhs.clause_index_; }
+
+<span style = "background-color:#dfd">  ClauseIndex operator +(const ClauseIndex&amp; rhs) const {
+    return ClauseIndex(clause_index_ + rhs.clause_index_);
+  }</span>
+
+  ClauseIndex operator -(const ClauseIndex&amp; rhs) const {
+    return ClauseIndex(clause_index_ - rhs.clause_index_);
+  }
+
+<span style = "background-color:#dfd">  ClauseIndex&amp; operator ++() {
+    ++clause_index_;
+    return *this;
+  }</span>
+
+  ClauseIndex operator ++(int) {
+    auto before = *this;
+    ++clause_index_;
+    return before;
+  }
+
+  ClauseIndex&amp; operator --() {
+    --clause_index_;
+    return *this;
+  }
+
+  ClauseIndex operator --(int) {
+    auto before = *this;
+    --clause_index_;
+    return before;
+  }
+};
+
+<span style = "background-color:#dfd">static const ClauseIndex clsSENTINEL(0);</span>
+
+
+
+//!&lt; Offset of a clause
+struct ClauseOfs {
+  unsigned clause_ofs_;
+
+public:
+<span style = "background-color:#dfd">  ClauseOfs() : clause_ofs_(0) {}
+  explicit ClauseOfs(unsigned var_id) : clause_ofs_(var_id) {}</span>
+
+<span style = "background-color:#dfd">  explicit operator unsigned() const { return clause_ofs_; }</span>
+
+  bool operator ==(const ClauseOfs&amp; rhs) const
+<span style = "background-color:#fdd">  { return clause_ofs_ == rhs.clause_ofs_; }</span>
+
+  bool operator !=(const ClauseOfs&amp; rhs) const
+<span style = "background-color:#dfd">  { return clause_ofs_ != rhs.clause_ofs_; }</span>
+
+  bool operator &lt;(const ClauseOfs&amp; rhs) const
+  { return clause_ofs_ &lt; rhs.clause_ofs_; }
+
+  bool operator &gt;(const ClauseOfs&amp; rhs) const
+  { return clause_ofs_ &gt; rhs.clause_ofs_; }
+
+  bool operator &lt;=(const ClauseOfs&amp; rhs) const
+  { return clause_ofs_ &lt;= rhs.clause_ofs_; }
+
+  bool operator &gt;=(const ClauseOfs&amp; rhs) const
+  { return clause_ofs_ &gt;= rhs.clause_ofs_; }
+
+  ClauseOfs&amp; operator ++() {
+    ++clause_ofs_;
+    return *this;
+  }
+
+  ClauseOfs operator ++(int) {
+    auto before = *this;
+    ++clause_ofs_;
+    return before;
+  }
+
+  ClauseOfs&amp; operator --() {
+    --clause_ofs_;
+    return *this;
+  }
+
+  ClauseOfs operator --(int) {
+    auto before = *this;
+    --clause_ofs_;
+    return before;
+  }
+};
+
+<span style = "background-color:#dfd">static const ClauseOfs NOT_A_CLAUSE(0);
+static const ClauseOfs SENTINEL_CL(0);</span>
+
+
+
+typedef unsigned CacheEntryID;
+
+enum class SOLVER_StateT {
+
+  NO_STATE, SUCCESS, TIMEOUT
+};
+} // sharpSAT namespace
+#endif /* PRIMITIVE_TYPES_H_ */</pre>
+	</body>
+</html>

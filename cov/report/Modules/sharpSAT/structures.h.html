@@ -1,0 +1,291 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>structures.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * structures.h
+ *
+ *  Created on: Jun 25, 2012
+ *      Author: Marc Thurley
+ */
+
+#ifndef SHARP_SAT_STRUCTURES_H_
+#define SHARP_SAT_STRUCTURES_H_
+
+#include &lt;sharpSAT/primitive_types.h&gt;
+
+#include &lt;cstdlib&gt;
+#include &lt;vector&gt;
+#include &lt;cassert&gt;
+
+namespace sharpSAT {
+
+static const int INVALID_DL = -1;
+
+enum class TriValue : unsigned char {
+  F_TRI = 0,
+  T_TRI = 1,
+  X_TRI = 2
+};
+
+class LiteralID {
+public:
+
+<span style = "background-color:#dfd">  LiteralID() {
+    value_ = 0;
+  }</span>
+
+<span style = "background-color:#dfd">  explicit LiteralID(int lit) {
+    value_ = (std::abs(lit) &lt;&lt; 1) + (unsigned) (lit &gt; 0);
+  }</span>
+
+  explicit LiteralID(unsigned value)
+<span style = "background-color:#dfd">  : value_(value)
+  {}</span>
+
+<span style = "background-color:#dfd">  explicit LiteralID(VariableIndex var, bool sign) {
+    value_ = (static_cast&lt;unsigned&gt;(var) &lt;&lt; 1) + (unsigned) sign;
+  }</span>
+
+<span style = "background-color:#dfd">  VariableIndex var() const {
+    return VariableIndex(value_ &gt;&gt; 1);
+  }</span>
+
+<span style = "background-color:#dfd">  int toInt() const {
+    return ((int) value_ &gt;&gt; 1) * ((sign()) ? 1 : -1);
+  }</span>
+
+<span style = "background-color:#dfd">  void inc(){++value_;}</span>
+
+<span style = "background-color:#dfd">  bool sign() const {
+    return (bool) (value_ &amp; 0x01);
+  }</span>
+
+<span style = "background-color:#dfd">  bool operator!=(const LiteralID &amp;rL2) const {
+    return value_ != rL2.value_;
+  }</span>
+
+<span style = "background-color:#dfd">  bool operator==(const LiteralID &amp;rL2) const {
+    return value_ == rL2.value_;
+  }</span>
+
+<span style = "background-color:#dfd">  const LiteralID neg() const {
+    return LiteralID(var(), !sign());
+  }</span>
+
+  void print() const;
+
+<span style = "background-color:#dfd">  explicit operator unsigned() const { return value_;}</span>
+
+private:
+
+  /*!
+   * MiniSAT-like encoded literal.
+   *
+   * The LSB is the sign (false = 0, true = 1).
+   * Remaining bits represent a variable.
+   */
+  unsigned value_;
+
+  template &lt;class _T&gt; friend class LiteralIndexedVector;
+};
+
+
+
+/*!
+ * Not-a-literal is a special literal.
+ *
+ * It's represented as value 0, hence its
+ * variable is the \ref varsSENTINEL.
+ */
+<span style = "background-color:#dfd">static const LiteralID NOT_A_LIT(VariableIndex(0), false);
+static const auto SENTINEL_LIT = NOT_A_LIT;</span>
+
+class Literal {
+public:
+
+  /*!
+   * The "neighbour" literals in binary clauses.
+   *
+   * Invariant: `back()` is \ref SENTINEL_LIT
+   */
+  std::vector&lt;LiteralID&gt; binary_links_ = std::vector&lt;LiteralID&gt;(1,SENTINEL_LIT);
+
+  /*!
+   * Subset of clauses, in which the literal appears.
+   *
+   * Values represent offsets within \ref Instance::literal_pool_.
+   *
+   * _Purpose:_ If a literal is set, the watched clauses will be updated.
+   * If set to `true`, clauses are ignored in future search.
+   * If set to `false`, the next literal watch for that clause.
+   *
+   * _Invariant:_ `front()` is \ref SENTINEL_CL
+   */
+  std::vector&lt;ClauseOfs&gt; watch_list_ = std::vector&lt;ClauseOfs&gt;(1,SENTINEL_CL);
+
+  //! Initialized to literal's occurances among all clauses
+  float activity_score_ = 0.0f;
+
+<span style = "background-color:#dfd">  void increaseActivity(unsigned u = 1){
+    activity_score_+= u;
+  }</span>
+
+<span style = "background-color:#fdd">  void removeWatchLinkTo(ClauseOfs clause_ofs) {
+    for (auto it = watch_list_.begin(); it != watch_list_.end(); it++)
+          if (*it == clause_ofs) {
+            *it = watch_list_.back();
+            watch_list_.pop_back();
+            return;
+          }
+  }</span>
+
+<span style = "background-color:#fdd">  void replaceWatchLinkTo(ClauseOfs clause_ofs, ClauseOfs replace_ofs) {
+    assert(clause_ofs != SENTINEL_CL);
+    assert(replace_ofs != SENTINEL_CL);
+        for (auto it = watch_list_.begin(); it != watch_list_.end(); it++)
+          if (*it == clause_ofs) {
+            *it = replace_ofs;
+            return;
+          }
+  }</span>
+
+<span style = "background-color:#dfd">  void addWatchLinkTo(ClauseOfs clause_ofs) {
+    watch_list_.push_back(clause_ofs);
+  }</span>
+
+<span style = "background-color:#dfd">  void addBinLinkTo(LiteralID lit) {
+    binary_links_.back() = lit;
+    binary_links_.push_back(SENTINEL_LIT);
+  }</span>
+
+<span style = "background-color:#dfd">  void resetWatchList(){
+        watch_list_.clear();
+        watch_list_.push_back(SENTINEL_CL);
+  }</span>
+
+<span style = "background-color:#dfd">  bool hasBinaryLinkTo(LiteralID lit) {
+    for (auto l : binary_links_) {
+      if (l == lit)
+        return true;
+    }
+    return false;
+  }</span>
+
+  bool hasBinaryLinks() {
+    return !binary_links_.empty();
+  }
+}; // Literal
+
+class Antecedent {
+
+  /*!
+   * A flagged integer.
+   *
+   * If the LSB is 1, the value represents a \ref ClauseOfs.
+   * If the represented clause is \ref NOT_A_CLAUSE,
+   * then the value in this field is 1.
+   * If `sizeof(unsigned int) = 4` (on 32-bit and 64-bit Linux),
+   * this can represent at most ~2*10^9 variables.
+   *
+   * If the LSB is 0, the value represents a \ref LiteralID.
+   * In that case the 2nd LSB is the sign.
+   * Remaining bits represent variable ID.
+   * If `sizeof(unsigned int) = 4` (on 32-bit and 64-bit Linux),
+   * this can represent at most ~10^9 variables.
+   * Since \ref varsSENTINEL is 0, its `false` \ref LiteralID
+   * is also 0 and hence this field is also 0.
+   */
+  unsigned int val_;
+
+public:
+
+  //! Antecendant represents \ref NOT_A_CLAUSE
+<span style = "background-color:#dfd">  Antecedent() {
+    val_ = 1;
+  }</span>
+
+  //! Antecendant represents a clause
+<span style = "background-color:#dfd">  Antecedent(const ClauseOfs cl_ofs) {
+     val_ = (static_cast&lt;unsigned&gt;(cl_ofs) &lt;&lt; 1) | 1;
+   }</span>
+
+  //! Antecendant represents a literal
+<span style = "background-color:#dfd">  Antecedent(const LiteralID idLit) {
+    val_ = (static_cast&lt;unsigned&gt;(idLit) &lt;&lt; 1);
+  }</span>
+
+<span style = "background-color:#dfd">  bool isAClause() const {
+    return val_ &amp; 0x01;
+  }</span>
+
+<span style = "background-color:#dfd">  ClauseOfs asCl() const {
+      return ClauseOfs(val_ &gt;&gt; 1);
+    }</span>
+
+<span style = "background-color:#dfd">  LiteralID asLit() {
+    return LiteralID(val_ &gt;&gt; 1);
+  }</span>
+  // A NON-Antecedent will only be A NOT_A_CLAUSE Clause Id
+<span style = "background-color:#dfd">  bool isAnt() {
+    return val_ != 1; //i.e. NOT a NOT_A_CLAUSE;
+  }</span>
+}; // Antecedent
+
+
+struct Variable {
+  Antecedent ante;
+  int decision_level = INVALID_DL;
+};
+
+/*!
+ * Statistics about a clause.
+ *
+ * For now Clause Header is just a dummy
+ * we keep it for possible later changes.
+ *
+ * _Warning:_ Due to initialization in \ref Instance::addClause,
+ * the constructor is never called. All memory occupied by
+ * objects of this will be **zero-initialized**!
+ */
+class ClauseHeader {
+  unsigned creation_time_; // number of conflicts seen at creation time
+  unsigned score_;
+  unsigned length_;
+public:
+
+<span style = "background-color:#dfd">  void increaseScore() {
+    score_++;
+  }
+  void decayScore() {
+      score_ &gt;&gt;= 1;
+  }
+  unsigned score() {
+      return score_;
+  }</span>
+
+  unsigned creation_time() {
+      return creation_time_;
+  }
+  unsigned length(){ return length_;}
+<span style = "background-color:#dfd">  void set_length(unsigned length){ length_ = length;}</span>
+
+<span style = "background-color:#dfd">  void set_creation_time(unsigned time) {
+    creation_time_ = time;
+  }</span>
+
+<span style = "background-color:#dfd">  constexpr static unsigned overheadInLits() {
+    return sizeof(ClauseHeader) / sizeof(LiteralID);
+  }</span>
+}; // ClauseHeader
+} // sharpSAT namespace
+#endif /* STRUCTURES_H_ */</pre>
+	</body>
+</html>

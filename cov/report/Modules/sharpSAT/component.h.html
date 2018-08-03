@@ -1,0 +1,129 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>component.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * component.h
+ *
+ *  Created on: Feb 5, 2013
+ *      Author: mthurley
+ */
+
+#ifndef SHARP_SAT_COMPONENT_H_
+#define SHARP_SAT_COMPONENT_H_
+
+#include &lt;assert.h&gt;
+#include &lt;cstddef&gt;
+#include &lt;vector&gt;
+
+#include &lt;sharpSAT/primitive_types.h&gt;
+#include &lt;sharpSAT/unions.h&gt;
+
+namespace sharpSAT {
+
+class Component {
+public:
+
+<span style = "background-color:#dfd">  void reserveSpace(unsigned int num_variables, unsigned int num_clauses) {
+    data_.reserve(num_variables + num_clauses + 2);
+  }</span>
+
+<span style = "background-color:#dfd">  void set_id(CacheEntryID id) {
+    id_ = id;
+  }</span>
+
+<span style = "background-color:#dfd">  CacheEntryID id() const{
+    return id_;
+  }</span>
+
+<span style = "background-color:#dfd">  void addVar(const VariableIndex var) {</span>
+    // the only time a varsSENTINEL is added should be in a
+    // call to closeVariableData(..)
+<span style = "background-color:#dfd">    assert(var != varsSENTINEL);
+    data_.push_back(var);
+  }</span>
+
+<span style = "background-color:#dfd">  void closeVariableData() {
+    data_.push_back(varsSENTINEL);
+    clauses_ofs_ = data_.size();
+  }</span>
+
+<span style = "background-color:#dfd">  void addCl(const ClauseIndex cl) {</span>
+    // the only time a clsSENTINEL is added should be in a
+    // call to closeClauseData(..)
+<span style = "background-color:#dfd">    assert(cl != clsSENTINEL);
+    data_.push_back(cl);
+  }</span>
+
+<span style = "background-color:#dfd">  void closeClauseData() {
+    data_.push_back(clsSENTINEL);
+    assert((clsBegin() - 1)-&gt;get&lt;VariableIndex&gt;() == varsSENTINEL);
+  }</span>
+
+  std::vector&lt;Variant&lt;ClauseIndex,VariableIndex&gt;&gt;::const_iterator
+<span style = "background-color:#dfd">  varsBegin() const {
+    return data_.begin();
+  }</span>
+
+  std::vector&lt;Variant&lt;ClauseIndex,VariableIndex&gt;&gt;::const_iterator
+<span style = "background-color:#dfd">  clsBegin() const {
+    return data_.begin() + clauses_ofs_;
+  }</span>
+
+<span style = "background-color:#dfd">  unsigned num_variables() const {
+    return clauses_ofs_ - 1;
+  }</span>
+
+<span style = "background-color:#dfd">  size_t numLongClauses() const {
+    return data_.size() - clauses_ofs_ - 1;
+  }</span>
+
+  bool empty() const {
+    return data_.empty();
+  }
+
+<span style = "background-color:#dfd">  void createAsDummyComponent(VariableIndex max_var_id, ClauseIndex max_clause_id) {
+    data_.clear();
+    clauses_ofs_ = 1;
+    for (VariableIndex idvar(1); idvar &lt;= max_var_id; ++idvar)
+      addVar(idvar);
+    closeVariableData();
+    if (max_clause_id != clsSENTINEL)
+      for (ClauseIndex idcl(1); idcl &lt;= max_clause_id; ++idcl)
+        addCl(idcl);
+    closeClauseData();
+  }</span>
+
+<span style = "background-color:#dfd">  void clear() {
+    clauses_ofs_ = 0;
+    data_.clear();
+  }</span>
+
+private:
+  // data_ stores the component data:
+  // for better cache performance the
+  // clause and variable data are stored in
+  // a contiguous piece of memory
+  // variables SENTINEL clauses SENTINEL
+  // this order has to be taken care of on filling
+  // in the data!
+  std::vector&lt;Variant&lt;ClauseIndex,VariableIndex&gt;&gt; data_;
+  unsigned clauses_ofs_ = 0;
+  // id_ will identify denote the entry in the cacheable component database,
+  // where a Packed version of this component is stored
+  // yet this does not imply that the model count of this component is already known
+  // once the model count is known, a link to the packed component will be stored
+  // in the hash table
+  CacheEntryID id_ = 0;
+};
+} // sharpSAT namespace
+#endif /* COMPONENT_H_ */</pre>
+	</body>
+</html>

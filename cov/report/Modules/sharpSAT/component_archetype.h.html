@@ -1,0 +1,301 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>component_archetype.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * component_archetype.h
+ *
+ *  Created on: Feb 9, 2013
+ *      Author: mthurley
+ */
+
+#ifndef SHARP_SAT_COMPONENT_ARCHETYPE_H_
+#define SHARP_SAT_COMPONENT_ARCHETYPE_H_
+
+
+#include &lt;sharpSAT/primitive_types.h&gt;
+#include &lt;sharpSAT/component_types/component.h&gt;
+#include &lt;sharpSAT/component_types/cacheable_component.h&gt;
+
+
+
+#include &lt;cstring&gt;
+#include &lt;algorithm&gt;
+
+
+namespace sharpSAT {
+
+namespace {
+  //! Extracts the underlying
+  template &lt;typename E&gt;
+<span style = "background-color:#dfd">  constexpr typename std::underlying_type&lt;E&gt;::type to_underlying(E e) noexcept {
+      return static_cast&lt;typename std::underlying_type&lt;E&gt;::type&gt;(e);
+  }</span>
+}
+
+//! State values for variables found during component analysis (CA)
+enum CA_SearchState : unsigned char {
+  NIL = 0,
+  VAR_IN_SUP_COMP_UNSEEN = 1,
+  VAR_SEEN = 2,
+  VAR_IN_OTHER_COMP = 4,
+  VAR_MASK = 7,
+  CL_IN_SUP_COMP_UNSEEN = 8,
+  CL_SEEN = 16,
+  CL_IN_OTHER_COMP = 32,
+  CL_ALL_LITS_ACTIVE = 64,
+  CL_MASK = 120
+};
+
+<span style = "background-color:#dfd">inline CA_SearchState operator &amp;(const CA_SearchState&amp; lhs, const CA_SearchState&amp; rhs) {
+  return CA_SearchState(to_underlying(lhs) &amp; to_underlying(rhs));
+}</span>
+
+<span style = "background-color:#dfd">inline CA_SearchState operator |(const CA_SearchState&amp; lhs, const CA_SearchState&amp; rhs) {
+  return CA_SearchState(to_underlying(lhs) | to_underlying(rhs));
+}</span>
+
+<span style = "background-color:#dfd">inline CA_SearchState&amp; operator &amp;=(CA_SearchState&amp; lhs, const CA_SearchState&amp; rhs) {
+  return lhs = lhs &amp; rhs;
+}</span>
+
+inline CA_SearchState&amp; operator |=(CA_SearchState&amp; lhs, const CA_SearchState&amp; rhs) {
+  return lhs = lhs | rhs;
+}
+
+
+
+class StackLevel;
+
+class ComponentArchetype {
+public:
+<span style = "background-color:#dfd">  ComponentArchetype() {
+  }</span>
+  ComponentArchetype(StackLevel &amp;stack_level, Component &amp;super_comp) :
+      p_super_comp_(&amp;super_comp), p_stack_level_(&amp;stack_level) {
+  }
+
+<span style = "background-color:#dfd">  void reInitialize(StackLevel &amp;stack_level, Component &amp;super_comp) {
+    p_super_comp_ = &amp;super_comp;
+    p_stack_level_ = &amp;stack_level;
+    clearArrays();
+    current_comp_for_caching_.reserveSpace(super_comp.num_variables(),super_comp.numLongClauses());
+  }</span>
+
+<span style = "background-color:#dfd">  Component &amp;super_comp() {
+    return *p_super_comp_;
+  }</span>
+
+<span style = "background-color:#dfd">  StackLevel &amp; stack_level() {
+    return *p_stack_level_;
+  }</span>
+
+<span style = "background-color:#dfd">  void setVar_in_sup_comp_unseen(VariableIndex v) {
+    seen(v) = CA_SearchState::VAR_IN_SUP_COMP_UNSEEN | (seen(v) &amp; CA_SearchState::CL_MASK);
+  }</span>
+
+<span style = "background-color:#dfd">  void setClause_in_sup_comp_unseen(ClauseIndex cl) {
+    seen(cl) = CA_SearchState::CL_IN_SUP_COMP_UNSEEN | (seen(cl) &amp; CA_SearchState::VAR_MASK);
+  }</span>
+
+  void setVar_nil(VariableIndex v) {
+    seen(v) &amp;= CA_SearchState::CL_MASK;
+  }
+
+<span style = "background-color:#dfd">  void setClause_nil(ClauseIndex cl) {
+    seen(cl) &amp;= CA_SearchState::VAR_MASK;
+  }</span>
+
+<span style = "background-color:#dfd">  void setVar_seen(VariableIndex v) {
+    seen(v) = CA_SearchState::VAR_SEEN | (seen(v) &amp; CA_SearchState::CL_MASK);
+  }</span>
+
+  void setClause_seen(ClauseIndex cl) {
+    setClause_nil(cl);
+    seen(cl) = CA_SearchState::CL_SEEN | (seen(cl) &amp; CA_SearchState::VAR_MASK);
+  }
+
+<span style = "background-color:#dfd">  void setClause_seen(ClauseIndex cl, bool all_lits_act) {
+      setClause_nil(cl);
+      seen(cl) = CA_SearchState::CL_SEEN</span>
+                | ( all_lits_act
+                  ? CA_SearchState::CL_ALL_LITS_ACTIVE
+                  : CA_SearchState::NIL )
+                | (seen(cl) &amp; CA_SearchState::VAR_MASK);
+<span style = "background-color:#dfd">    }</span>
+
+<span style = "background-color:#dfd">  void setVar_in_other_comp(VariableIndex v) {
+    seen(v) = CA_SearchState::VAR_IN_OTHER_COMP | (seen(v) &amp; CA_SearchState::CL_MASK);
+  }</span>
+
+<span style = "background-color:#dfd">  void setClause_in_other_comp(ClauseIndex cl) {
+    seen(cl) = CA_SearchState::CL_IN_OTHER_COMP | (seen(cl) &amp; CA_SearchState::VAR_MASK);
+  }</span>
+
+<span style = "background-color:#dfd">  bool var_seen(VariableIndex v) {
+    return seen(v) &amp; CA_SearchState::VAR_SEEN;
+  }</span>
+
+<span style = "background-color:#dfd">  bool clause_seen(ClauseIndex cl) {
+    return seen(cl) &amp; CA_SearchState::CL_SEEN;
+  }</span>
+
+<span style = "background-color:#dfd">  bool clause_all_lits_active(ClauseIndex cl) {
+    return seen(cl) &amp; CA_SearchState::CL_ALL_LITS_ACTIVE;
+  }</span>
+  void setClause_all_lits_active(ClauseIndex cl) {
+    seen(cl) |= CA_SearchState::CL_ALL_LITS_ACTIVE;
+  }
+
+<span style = "background-color:#dfd">  bool var_nil(VariableIndex v) {
+    return (seen(v) &amp; CA_SearchState::VAR_MASK) == 0;
+  }</span>
+
+<span style = "background-color:#dfd">  bool clause_nil(ClauseIndex cl) {
+    return (seen(cl) &amp; CA_SearchState::CL_MASK) == 0;
+  }</span>
+
+<span style = "background-color:#dfd">  bool var_unseen_in_sup_comp(VariableIndex v) {
+    return seen(v) &amp; CA_SearchState::VAR_IN_SUP_COMP_UNSEEN;
+  }</span>
+
+<span style = "background-color:#dfd">  bool clause_unseen_in_sup_comp(ClauseIndex cl) {
+    return seen(cl) &amp; CA_SearchState::CL_IN_SUP_COMP_UNSEEN;
+  }</span>
+
+  bool var_seen_in_peer_comp(VariableIndex v) {
+    return seen(v) &amp; CA_SearchState::VAR_IN_OTHER_COMP;
+  }
+
+  bool clause_seen_in_peer_comp(ClauseIndex cl) {
+    return seen(cl) &amp; CA_SearchState::CL_IN_OTHER_COMP;
+  }
+
+<span style = "background-color:#dfd">  static void initArrays(VariableIndex max_variable_id, ClauseIndex max_clause_id) {</span>
+    unsigned seen_size = std::max(
+      static_cast&lt;unsigned&gt;(max_variable_id),
+      static_cast&lt;unsigned&gt;(max_clause_id)
+<span style = "background-color:#dfd">    ) + 1;
+    seen_ = new CA_SearchState[seen_size];
+    seen_byte_size_ = sizeof(CA_SearchState) * (seen_size);
+    clearArrays();</span>
+
+<span style = "background-color:#dfd">  }</span>
+
+<span style = "background-color:#dfd">  static void clearArrays() {
+    memset(seen_, CA_SearchState::NIL, seen_byte_size_);
+  }</span>
+
+
+<span style = "background-color:#dfd">  Component *makeComponentFromState(unsigned stack_size) {
+    Component *p_new_comp = new Component();
+    p_new_comp-&gt;reserveSpace(stack_size, super_comp().numLongClauses());
+    current_comp_for_caching_.clear();</span>
+
+<span style = "background-color:#dfd">    for (auto v_it = super_comp().varsBegin(); v_it-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL;  v_it++)
+      if (var_seen(v_it-&gt;get&lt;VariableIndex&gt;())) { //we have to put a var into our component
+        p_new_comp-&gt;addVar(v_it-&gt;get&lt;VariableIndex&gt;());
+        current_comp_for_caching_.addVar(v_it-&gt;get&lt;VariableIndex&gt;());
+        setVar_in_other_comp(v_it-&gt;get&lt;VariableIndex&gt;());
+      }
+    p_new_comp-&gt;closeVariableData();
+    current_comp_for_caching_.closeVariableData();</span>
+
+<span style = "background-color:#dfd">    for (auto it_cl = super_comp().clsBegin(); it_cl-&gt;get&lt;ClauseIndex&gt;() != clsSENTINEL; it_cl++)
+      if (clause_seen(it_cl-&gt;get&lt;ClauseIndex&gt;())) {
+        p_new_comp-&gt;addCl(it_cl-&gt;get&lt;ClauseIndex&gt;());
+           if(!clause_all_lits_active(it_cl-&gt;get&lt;ClauseIndex&gt;()))
+             current_comp_for_caching_.addCl(it_cl-&gt;get&lt;ClauseIndex&gt;());
+        setClause_in_other_comp(it_cl-&gt;get&lt;ClauseIndex&gt;());
+      }
+    p_new_comp-&gt;closeClauseData();
+    current_comp_for_caching_.closeClauseData();
+    return p_new_comp;
+  }</span>
+//  Component *makeComponentFromState(unsigned stack_size) {
+//      Component *p_new_comp = new Component();
+//      p_new_comp-&gt;reserveSpace(stack_size, super_comp().numLongClauses());
+//
+//      for (auto v_it = super_comp().varsBegin(); *v_it != varsSENTINEL;  v_it++)
+//        if (var_seen(*v_it)) { //we have to put a var into our component
+//          p_new_comp-&gt;addVar(*v_it);
+//          setVar_in_other_comp(*v_it);
+//        }
+//      p_new_comp-&gt;closeVariableData();
+//
+//      for (auto it_cl = super_comp().clsBegin(); *it_cl != clsSENTINEL; it_cl++)
+//        if (clause_seen(*it_cl)) {
+//          p_new_comp-&gt;addCl(*it_cl);
+//          setClause_in_other_comp(*it_cl);
+//        }
+//      p_new_comp-&gt;closeClauseData();
+//      return p_new_comp;
+//    }
+
+  inline void createComponents(Component &amp;ret_comp, CacheableComponent ret_cache_comp,
+      unsigned stack_size);
+
+  Component current_comp_for_caching_;
+private:
+  Component *p_super_comp_;
+  StackLevel *p_stack_level_;
+
+<span style = "background-color:#dfd">  static CA_SearchState&amp; seen(VariableIndex var) {
+    return seen_[static_cast&lt;unsigned&gt;(var)];
+  }</span>
+
+<span style = "background-color:#dfd">  static CA_SearchState&amp; seen(ClauseIndex cl) {
+    return seen_[static_cast&lt;unsigned&gt;(cl)];
+  }</span>
+
+  static CA_SearchState *seen_;
+  static unsigned seen_byte_size_;
+
+};
+
+
+
+
+
+void ComponentArchetype::createComponents(Component&amp;, CacheableComponent, unsigned){
+
+//      ret_comp.reserveSpace(stack_size, super_comp().numLongClauses());
+//      current_comp_for_caching_.clear();
+//
+//      VariableIndex prev_var = 0;
+//      for (auto v_it = super_comp().varsBegin(); *v_it != varsSENTINEL;  v_it++)
+//        if (var_seen(*v_it)) { //we have to put a var into our component
+//          ret_comp.addVar(*v_it);
+//          current_comp_for_caching_.addVar(*v_it - prev_var - 1);
+//          prev_var = *v_it;
+//          setVar_in_other_comp(*v_it);
+//      }
+//      ret_comp.closeVariableData();
+//      current_comp_for_caching_.closeVariableData();
+//
+//      ClauseIndex prev_cl = 0;
+//      for (auto it_cl = super_comp().clsBegin(); *it_cl != clsSENTINEL; it_cl++)
+//        if (clause_seen(*it_cl)) {
+//          ret_comp.addCl(*it_cl);
+//          if(!clause_all_lits_active(*it_cl)){
+//            current_comp_for_caching_.addCl(*it_cl - prev_cl - 1);
+//            prev_cl =  *it_cl;
+//          }
+//          setClause_in_other_comp(*it_cl);
+//        }
+//      ret_comp.closeClauseData();
+//      //current_comp_for_caching_.closeClauseData();
+//      return p_new_comp;
+
+}
+} // sharpSAT namespace
+#endif /* COMPONENT_ARCHETYPE_H_ */</pre>
+	</body>
+</html>

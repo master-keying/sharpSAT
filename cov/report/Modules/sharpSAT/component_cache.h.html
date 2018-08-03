@@ -1,0 +1,187 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>component_cache.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * component_cache.h
+ *
+ *  Created on: Feb 5, 2013
+ *      Author: mthurley
+ */
+
+#ifndef SHARP_SAT_COMPONENT_CACHE_H_
+#define SHARP_SAT_COMPONENT_CACHE_H_
+
+
+#include &lt;sharpSAT/stack.h&gt;
+#include &lt;sharpSAT/statistics.h&gt;
+#include &lt;sharpSAT/solver_config.h&gt;
+#include &lt;sharpSAT/component_types/component.h&gt;
+#include &lt;sharpSAT/component_types/cacheable_component.h&gt;
+
+#include &lt;cstddef&gt;
+#include &lt;gmpxx.h&gt;
+
+namespace sharpSAT {
+
+class ComponentCache {
+public:
+
+  ComponentCache(DataAndStatistics &amp;statistics);
+
+<span style = "background-color:#dfd">  ~ComponentCache() {</span>
+   // debug_dump_data();
+<span style = "background-color:#dfd">    for (auto &amp;pentry : entry_base_)
+          if (pentry != nullptr)
+            delete pentry;
+  }</span>
+
+  void init(Component &amp;super_comp, SolverConfiguration &amp;config);
+
+  // compute the size in bytes of the component cache from scratch
+  // the value is stored in bytes_memory_usage_
+  uint64_t compute_byte_size_infrasture();
+
+<span style = "background-color:#dfd">  CacheableComponent &amp;entry(CacheEntryID id) {
+    assert(entry_base_.size() &gt; id);
+    assert(entry_base_[id] != nullptr);
+    return *entry_base_[id];
+  }</span>
+
+  CacheableComponent &amp;entry(const Component&amp; comp) {
+      return entry(comp.id());
+  }
+
+<span style = "background-color:#dfd">  bool hasEntry(CacheEntryID id) {
+    assert(entry_base_.size() &gt; id);
+    return entry_base_[id];
+  }</span>
+
+  // removes the entry id from the hash table
+  // but not from the entry base
+  inline void removeFromHashTable(CacheEntryID id);
+
+  // we delete the Component with ID id
+  // and all its descendants from the cache
+  inline void cleanPollutionsInvolving(CacheEntryID id);
+
+  // creates a CCacheEntry in the entry base
+  // which contains a packed copy of comp
+  // returns the id of the entry created
+  // stores in the entry the position of
+  // comp which is a part of the component stack
+  inline CacheEntryID storeAsEntry(CacheableComponent &amp;ccomp,
+                            CacheEntryID super_comp_id);
+
+  // check quickly if the model count of the component is cached
+  // if so, incorporate it into the model count of top
+  // if not, store the packed version of it in the entry_base of the cache
+<span style = "background-color:#dfd">  bool manageNewComponent(StackLevel &amp;top, CacheableComponent &amp;packed_comp) {
+       statistics_.num_cache_look_ups_++;
+       unsigned table_ofs =  packed_comp.hashkey() &amp; table_size_mask_;</span>
+
+<span style = "background-color:#dfd">       CacheEntryID act_id = table_[table_ofs];
+       while(act_id){
+         if (entry(act_id).equals(packed_comp)) {
+           statistics_.incorporate_cache_hit(packed_comp);
+           top.includeSolution(entry(act_id).model_count());
+           return true;</span>
+         }
+<span style = "background-color:#dfd">         act_id = entry(act_id).next_bucket_element();
+       }
+       return false;
+  }</span>
+
+
+  // unchecked erase of an entry from entry_base_
+<span style = "background-color:#dfd">  void eraseEntry(CacheEntryID id) {
+    statistics_.incorporate_cache_erase(*entry_base_[id]);
+    delete entry_base_[id];
+    entry_base_[id] = nullptr;
+    free_entry_base_slots_.push_back(id);
+  }</span>
+
+
+  // store the number in model_count as the model count of CacheEntryID id
+  inline void storeValueOf(CacheEntryID id, const mpz_class &amp;model_count);
+
+  bool deleteEntries();
+
+  // delete entries, keeping the descendants tree consistent
+  inline void removeFromDescendantsTree(CacheEntryID id);
+
+  // test function to ensure consistency of the descendant tree
+  inline void test_descendantstree_consistency();
+  void debug_dump_data();
+private:
+
+<span style = "background-color:#dfd">  void considerCacheResize(){
+    if (entry_base_.size() &gt; table_.size()) {</span>
+<span style = "background-color:#fdd">      reHashTable(2*table_.size());</span>
+    }
+<span style = "background-color:#dfd">  }</span>
+<span style = "background-color:#fdd">  void reHashTable(unsigned size){</span>
+
+<span style = "background-color:#fdd">    table_.clear();
+    table_.resize(size,0);</span>
+    // we assert that table size is a power of 2
+    // otherwise the table_size_mask_ doesn't work
+<span style = "background-color:#fdd">    assert((table_.size() &amp; (table_.size() - 1)) == 0);
+    table_size_mask_ = table_.size() - 1;</span>
+    // cout &lt;&lt; "ts " &lt;&lt; table_.size() &lt;&lt; " " &lt;&lt; table_size_mask_ &lt;&lt; endl;
+<span style = "background-color:#fdd">    unsigned collisions = 0;
+    for (unsigned id = 2; id &lt; entry_base_.size(); id++)
+      if (entry_base_[id] != nullptr ){
+        entry_base_[id]-&gt;set_next_bucket_element(0);
+       if(entry_base_[id]-&gt;modelCountFound()) {
+        unsigned table_ofs=tableEntry(id);
+        collisions += (table_[table_ofs] &gt; 0 ? 1 : 0);
+        entry_base_[id]-&gt;set_next_bucket_element(table_[table_ofs]);
+        table_[table_ofs] = id;</span>
+       }
+    }
+    // cout &lt;&lt; "coll " &lt;&lt; collisions &lt;&lt; endl;
+<span style = "background-color:#fdd">  }</span>
+
+<span style = "background-color:#dfd">  unsigned tableEntry(CacheEntryID id){
+    return entry(id).hashkey() &amp; table_size_mask_;
+  }
+  void add_descendant(CacheEntryID compid, CacheEntryID descendantid) {
+      assert(descendantid != entry(compid).first_descendant());
+      entry(descendantid).set_next_sibling(entry(compid).first_descendant());
+      entry(compid).set_first_descendant(descendantid);
+    }</span>
+
+  void remove_firstdescendantOf(CacheEntryID compid) {
+      CacheEntryID desc = entry(compid).first_descendant();
+      if (desc != 0)
+        entry(compid).set_first_descendant(entry(desc).next_sibling());
+    }
+
+  std::vector&lt;CacheableComponent *&gt; entry_base_;
+  std::vector&lt;CacheEntryID&gt; free_entry_base_slots_;
+
+  // the actual hash table
+  // by means of which the cache is accessed
+  std::vector&lt;CacheEntryID&gt; table_;
+
+  unsigned table_size_mask_;
+
+  DataAndStatistics &amp;statistics_;
+
+<span style = "background-color:#dfd">  unsigned long my_time_ = 0;</span>
+};
+} // sharpSAT namespace
+
+#include &lt;sharpSAT/component_cache-inl.h&gt;
+
+#endif /* COMPONENT_CACHE_H_ */</pre>
+	</body>
+</html>

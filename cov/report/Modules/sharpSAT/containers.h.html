@@ -1,0 +1,99 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>containers.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * containers.h
+ *
+ *  Created on: Jun 27, 2012
+ *      Author: Marc Thurley
+ */
+
+#ifndef SHARP_SAT_CONTAINERS_H_
+#define SHARP_SAT_CONTAINERS_H_
+
+#include &lt;sharpSAT/structures.h&gt;
+
+namespace sharpSAT {
+
+template&lt;class _T&gt;
+class LiteralIndexedVector: protected std::vector&lt;_T&gt; {
+
+public:
+	LiteralIndexedVector(unsigned size = 0) :
+<span style = "background-color:#dfd">			std::vector&lt;_T&gt;(size * 2) {
+	}</span>
+	LiteralIndexedVector(unsigned size,
+			const typename std::vector&lt;_T&gt;::value_type&amp; __value) :
+<span style = "background-color:#dfd">			std::vector&lt;_T&gt;(size * 2, __value) {
+	}
+	inline _T &amp;operator[](const LiteralID lit) {
+		return *(std::vector&lt;_T&gt;::begin() + static_cast&lt;unsigned&gt;(lit));
+	}</span>
+
+<span style = "background-color:#dfd">	inline const _T &amp;operator[](const LiteralID &amp;lit) const {
+		return *(std::vector&lt;_T&gt;::begin() + static_cast&lt;unsigned&gt;(lit));
+	}</span>
+
+<span style = "background-color:#dfd">	inline typename std::vector&lt;_T&gt;::iterator begin() {
+		return std::vector&lt;_T&gt;::begin() + 2;
+	}</span>
+
+<span style = "background-color:#dfd">	void resize(unsigned _size) {
+		std::vector&lt;_T&gt;::resize(_size * 2);
+	}
+	void resize(unsigned _size, const typename std::vector&lt;_T&gt;::value_type&amp; _value) {
+		std::vector&lt;_T&gt;::resize(_size * 2, _value);
+	}</span>
+
+	void reserve(unsigned _size) {
+		std::vector&lt;_T&gt;::reserve(_size * 2);
+	}
+
+<span style = "background-color:#dfd">	LiteralID end_lit() {
+		return LiteralID(VariableIndex(size() / 2), false);
+	}</span>
+
+	using std::vector&lt;_T&gt;::end;
+	using std::vector&lt;_T&gt;::size;
+	using std::vector&lt;_T&gt;::clear;
+	using std::vector&lt;_T&gt;::push_back;
+}; // LiteralIndexedVector
+
+
+
+//! Vector indexed by \ref VariableIndex
+template&lt;class T&gt;
+struct VariableIndexedVector : public std::vector&lt;T&gt; {
+
+  VariableIndexedVector()
+<span style = "background-color:#dfd">  : std::vector&lt;T&gt;()
+  {}</span>
+
+  VariableIndexedVector(size_t n)
+<span style = "background-color:#dfd">  : std::vector&lt;T&gt;(n)
+  {}</span>
+
+  VariableIndexedVector(size_t n, const T&amp; value)
+<span style = "background-color:#dfd">  : std::vector&lt;T&gt;(n, value)
+  {}</span>
+
+<span style = "background-color:#dfd">  typename std::vector&lt;T&gt;::const_reference operator [](const VariableIndex&amp; var) const {
+    return std::vector&lt;T&gt;::operator[](static_cast&lt;unsigned&gt;(var));
+  }</span>
+
+<span style = "background-color:#dfd">  typename std::vector&lt;T&gt;::reference operator [](const VariableIndex&amp; var) {
+    return std::vector&lt;T&gt;::operator[](static_cast&lt;unsigned&gt;(var));
+  }</span>
+}; // var_vactor&lt;T&gt;
+} // sharpSAT namespace
+#endif /* CONTAINERS_H_ */</pre>
+	</body>
+</html>

@@ -1,0 +1,221 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>alt_component_analyzer.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * alt_component_analyzer.cpp
+ *
+ *  Created on: Mar 5, 2013
+ *      Author: mthurley
+ */
+
+
+#include &lt;sharpSAT/alt_component_analyzer.h&gt;
+
+using namespace std;
+
+namespace sharpSAT {
+
+void AltComponentAnalyzer::initialize(LiteralIndexedVector&lt;Literal&gt; &amp; literals,
+<span style = "background-color:#dfd">    vector&lt;LiteralID&gt; &amp;lit_pool) {</span>
+
+  // untyped local copy of max_variable_id_
+<span style = "background-color:#dfd">  unsigned max_variable_id = static_cast&lt;unsigned&gt;(literals.end_lit().var()) - 1;
+  max_variable_id_ = VariableIndex(max_variable_id);</span>
+
+<span style = "background-color:#dfd">  search_stack_.reserve(max_variable_id + 1);
+  var_frequency_scores_.resize(max_variable_id + 1, 0);
+  variable_occurrence_lists_pool_.clear();
+  variable_link_list_offsets_.clear();
+  variable_link_list_offsets_.resize(max_variable_id + 1, 0);</span>
+
+<span style = "background-color:#dfd">  VariableIndexedVector&lt;vector&lt;ClauseIndex&gt;&gt; occs(max_variable_id + 1);
+  VariableIndexedVector&lt;vector&lt;Variant&lt;ClauseIndex,LiteralID&gt;&gt;&gt; occ_long_clauses(max_variable_id + 1);
+  VariableIndexedVector&lt;vector&lt;Variant&lt;ClauseIndex,LiteralID&gt;&gt;&gt; occ_ternary_clauses(max_variable_id + 1);</span>
+
+<span style = "background-color:#dfd">  vector&lt;LiteralID&gt; tmp;
+  max_clause_id_ = ClauseIndex(0);
+  unsigned curr_clause_length = 0;
+  auto it_curr_cl_st = lit_pool.begin();</span>
+
+<span style = "background-color:#dfd">  for (auto it_lit = lit_pool.begin(); it_lit &lt; lit_pool.end(); it_lit++) {
+    if (*it_lit == SENTINEL_LIT) {</span>
+
+<span style = "background-color:#dfd">      if (it_lit + 1 == lit_pool.end())
+        break;</span>
+
+<span style = "background-color:#dfd">      ++max_clause_id_;
+      it_lit += ClauseHeader::overheadInLits();
+      it_curr_cl_st = it_lit + 1;
+      curr_clause_length = 0;</span>
+
+<span style = "background-color:#dfd">    } else {
+      assert(it_lit-&gt;var() &lt;= max_variable_id_);
+      curr_clause_length++;</span>
+
+<span style = "background-color:#dfd">      getClause(tmp, it_curr_cl_st, it_lit-&gt;var());</span>
+
+<span style = "background-color:#dfd">      assert(tmp.size() &gt; 1);
+      if(tmp.size() == 2) {</span>
+
+<span style = "background-color:#dfd">        auto&amp; target = occ_ternary_clauses[it_lit-&gt;var()];
+        target.reserve(target.size() + 1 + tmp.size());</span>
+
+<span style = "background-color:#dfd">        target.push_back(max_clause_id_);
+        for (LiteralID lit : tmp) {
+          target.push_back(lit);
+        }
+      } else {
+        assert(tmp.size() &gt;= 3);
+        occs[it_lit-&gt;var()].push_back(max_clause_id_);
+        occs[it_lit-&gt;var()].push_back(ClauseIndex(occ_long_clauses[it_lit-&gt;var()].size()));</span>
+
+<span style = "background-color:#dfd">        auto&amp; target = occ_long_clauses[it_lit-&gt;var()];
+        target.reserve(target.size() + 1 + tmp.size());</span>
+
+<span style = "background-color:#dfd">        for (LiteralID lit : tmp) {
+          target.push_back(lit);
+        }
+        target.push_back(clsSENTINEL);</span>
+      }
+<span style = "background-color:#dfd">    }
+  }</span>
+
+<span style = "background-color:#dfd">  ComponentArchetype::initArrays(max_variable_id_, max_clause_id_);</span>
+  // the unified link list
+<span style = "background-color:#dfd">  unified_variable_links_lists_pool_.clear();
+  unified_variable_links_lists_pool_.push_back(0u);
+  unified_variable_links_lists_pool_.push_back(0u);</span>
+
+<span style = "background-color:#dfd">  for (VariableIndex v(1); v &lt; VariableIndex(occs.size()); ++v) {</span>
+    // BEGIN data for binary clauses
+<span style = "background-color:#dfd">    variable_link_list_offsets_[v] = unified_variable_links_lists_pool_.size();
+    for (auto l : literals[LiteralID(v, false)].binary_links_)
+      if (l != SENTINEL_LIT)
+        unified_variable_links_lists_pool_.push_back(l.var());</span>
+
+<span style = "background-color:#dfd">    for (auto l : literals[LiteralID(v, true)].binary_links_)
+      if (l != SENTINEL_LIT)
+        unified_variable_links_lists_pool_.push_back(l.var());</span>
+
+<span style = "background-color:#dfd">    unified_variable_links_lists_pool_.push_back(varsSENTINEL);</span>
+
+    // BEGIN data for ternary clauses
+<span style = "background-color:#dfd">    unified_variable_links_lists_pool_.insert(</span>
+        unified_variable_links_lists_pool_.end(),
+        occ_ternary_clauses[v].begin(),
+        occ_ternary_clauses[v].end()
+    );
+    // This can't be typed using ClauseOrVariableOrLiteral,
+    // because the previous items are either Clause or a Literal
+    // (not 1 concrete type).
+<span style = "background-color:#dfd">    unified_variable_links_lists_pool_.push_back(0u);</span>
+
+    // BEGIN data for long clauses
+<span style = "background-color:#dfd">    for(auto it = occs[v].begin(); it != occs[v].end(); it+=2){
+      unified_variable_links_lists_pool_.push_back(*it);
+      unified_variable_links_lists_pool_.push_back(*(it + 1) + ClauseIndex(occs[v].end() - it));
+    }
+    unified_variable_links_lists_pool_.push_back(clsSENTINEL);</span>
+
+<span style = "background-color:#dfd">    unified_variable_links_lists_pool_.insert(</span>
+        unified_variable_links_lists_pool_.end(),
+        occ_long_clauses[v].begin(),
+        occ_long_clauses[v].end()
+    );
+<span style = "background-color:#dfd">  }
+}</span>
+
+
+//void AltComponentAnalyzer::recordComponentOf(const VariableIndex var) {
+//
+//  search_stack_.clear();
+//  setSeenAndStoreInSearchStack(var);
+//
+//  for (auto vt = search_stack_.begin(); vt != search_stack_.end(); vt++) {
+//    //BEGIN traverse binary clauses
+//    assert(isActive(*vt));
+//    unsigned *p = beginOfLinkList(*vt);
+//    for (; *p; p++) {
+//      if(isUnseenAndActive(*p)){
+//        setSeenAndStoreInSearchStack(*p);
+//        var_frequency_scores_[*p]++;
+//        var_frequency_scores_[*vt]++;
+//      }
+//    }
+//    //END traverse binary clauses
+//    auto s = p;
+//    for ( p++; *p ; p+=3) {
+////      if(archetype_.clause_unseen_in_sup_comp(*p)){
+////        LiteralID * pstart_cls = reinterpret_cast&lt;LiteralID *&gt;(p + 1);
+////        searchThreeClause(*vt,*p, pstart_cls);
+////      }
+//    }
+//    //END traverse ternary clauses
+//
+//    for (p++; *p ; p +=2) {
+//      if(archetype_.clause_unseen_in_sup_comp(*p)){
+//        LiteralID * pstart_cls = reinterpret_cast&lt;LiteralID *&gt;(p + 1 + *(p+1));
+//        searchClause(*vt,*p, pstart_cls);
+//      }
+//    }
+//
+//    for ( s++; *s ; s+=3) {
+//          if(archetype_.clause_unseen_in_sup_comp(*s)){
+//            LiteralID * pstart_cls = reinterpret_cast&lt;LiteralID *&gt;(s + 1);
+//            searchThreeClause(*vt,*s, pstart_cls);
+//          }
+//        }
+//  }
+//}
+
+<span style = "background-color:#dfd">void AltComponentAnalyzer::recordComponentOf(const VariableIndex var) {</span>
+
+<span style = "background-color:#dfd">  search_stack_.clear();
+  setSeenAndStoreInSearchStack(var);</span>
+
+<span style = "background-color:#dfd">  for (auto vt = search_stack_.begin(); vt != search_stack_.end(); vt++) {</span>
+    //BEGIN traverse binary clauses
+<span style = "background-color:#dfd">    assert(isActive(*vt));
+    auto p = beginOfLinkList(*vt);
+    for (; p-&gt;get&lt;VariableIndex&gt;() != varsSENTINEL; p++) {
+      if(manageSearchOccurrenceOf(LiteralID(p-&gt;get&lt;VariableIndex&gt;(),true))){
+        var_frequency_scores_[p-&gt;get&lt;VariableIndex&gt;()]++;
+        var_frequency_scores_[*vt]++;</span>
+      }
+<span style = "background-color:#dfd">    }</span>
+    //END traverse binary clauses
+
+<span style = "background-color:#dfd">    for ( p++; static_cast&lt;unsigned&gt;(*p) ; p+=3) {
+      if(archetype_.clause_unseen_in_sup_comp(p-&gt;get&lt;ClauseIndex&gt;())) {
+        LiteralID litA = (p + 1)-&gt;get&lt;LiteralID&gt;();
+        LiteralID litB = (p + 2)-&gt;get&lt;LiteralID&gt;();
+        if(isSatisfied(litA)|| isSatisfied(litB))
+          archetype_.setClause_nil(p-&gt;get&lt;ClauseIndex&gt;());
+        else {
+          var_frequency_scores_[*vt]++;
+          manageSearchOccurrenceAndScoreOf(litA);
+          manageSearchOccurrenceAndScoreOf(litB);
+          archetype_.setClause_seen(p-&gt;get&lt;ClauseIndex&gt;(),</span>
+              isActive(litA) &amp; isActive(litB));
+        }
+      }
+<span style = "background-color:#dfd">    }</span>
+    //END traverse ternary clauses
+
+<span style = "background-color:#dfd">    for (p++; p-&gt;get&lt;ClauseIndex&gt;() != clsSENTINEL; p +=2)
+      if(archetype_.clause_unseen_in_sup_comp(p-&gt;get&lt;ClauseIndex&gt;()))
+        searchClause(*vt, p-&gt;get&lt;ClauseIndex&gt;(), p + 1 + static_cast&lt;unsigned&gt;((p+1)-&gt;get&lt;ClauseIndex&gt;()));
+  }
+}</span>
+
+} // sharpSAT namespace</pre>
+	</body>
+</html>

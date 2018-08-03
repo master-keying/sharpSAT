@@ -1,0 +1,179 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>stack.h</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * stack.h
+ *
+ *  Created on: Aug 23, 2012
+ *      Author: Marc Thurley
+ */
+
+#ifndef SHARP_SAT_STACK_H_
+#define SHARP_SAT_STACK_H_
+
+#include &lt;cassert&gt;
+#include &lt;vector&gt;
+#include &lt;cstddef&gt;
+#include &lt;gmpxx.h&gt;
+
+namespace sharpSAT {
+
+class StackLevel {
+  /// active Component, once initialized, it should not change
+  const unsigned super_component_ = 0;
+  // branch
+<span style = "background-color:#dfd">  bool active_branch_ = false;</span>
+
+  // offset in the literal stack where to store set lits
+  const unsigned literal_stack_ofs_ = 0;
+
+  //  Solutioncount
+<span style = "background-color:#dfd">  mpz_class branch_model_count_[2] = {0,0};
+  bool branch_found_unsat_[2] = {false,false};</span>
+
+  /// remaining Components
+
+  // the start offset in the component stack for
+  // the remaining components in this decision level
+  // all remaining components can hence be found in
+  // [remaining_components_ofs_, "nextLevel".remaining_components_begin_)
+  const unsigned remaining_components_ofs_ = 0;
+
+  // boundary of the stack marking which components still need to be processed
+  // all components to be processed can be found in
+  // [remaining_components_ofs_, unprocessed_components_end_)
+  // also, all processed, can be found
+  // in [unprocessed_components_end_, component_stack.size())
+  unsigned unprocessed_components_end_ = 0;
+public:
+
+<span style = "background-color:#dfd">  bool hasUnprocessedComponents() {
+    assert(unprocessed_components_end_ &gt;= remaining_components_ofs_);
+    return unprocessed_components_end_ &gt; remaining_components_ofs_;
+  }
+  void nextUnprocessedComponent() {
+    assert(unprocessed_components_end_ &gt; remaining_components_ofs_);
+    unprocessed_components_end_--;
+  }</span>
+
+<span style = "background-color:#dfd">  void resetRemainingComps() {
+    unprocessed_components_end_ = remaining_components_ofs_;
+  }
+  unsigned super_component() {
+    return super_component_;
+  }
+  unsigned remaining_components_ofs() {
+    return remaining_components_ofs_;
+  }
+  void set_unprocessed_components_end(unsigned end) {
+    unprocessed_components_end_ = end;
+    assert(remaining_components_ofs_ &lt;= unprocessed_components_end_);
+  }</span>
+
+  StackLevel(unsigned super_comp, unsigned lit_stack_ofs,
+      unsigned comp_stack_ofs) :
+<span style = "background-color:#dfd">      super_component_(super_comp),
+      literal_stack_ofs_(lit_stack_ofs),
+      remaining_components_ofs_(comp_stack_ofs),
+      unprocessed_components_end_(comp_stack_ofs) {
+    assert(super_comp &lt; comp_stack_ofs);
+  }</span>
+
+<span style = "background-color:#dfd">  unsigned currentRemainingComponent() {
+    assert(remaining_components_ofs_ &lt;= unprocessed_components_end_ - 1);
+    return unprocessed_components_end_ - 1;
+  }
+  bool isSecondBranch() {
+    return active_branch_;
+  }</span>
+
+<span style = "background-color:#dfd">  void changeBranch() {
+    active_branch_ = true;
+  }</span>
+
+<span style = "background-color:#dfd">  bool anotherCompProcessible() {
+    return (!branch_found_unsat()) &amp;&amp; hasUnprocessedComponents();
+  }</span>
+
+<span style = "background-color:#dfd">  unsigned literal_stack_ofs() {
+    return literal_stack_ofs_;
+  }
+  void includeSolution(const mpz_class &amp;solutions) {
+    if (branch_found_unsat_[active_branch_]) {</span>
+<span style = "background-color:#fdd">      assert(branch_model_count_[active_branch_] == 0);
+      return;</span>
+    }
+<span style = "background-color:#dfd">    if (solutions == 0)
+      branch_found_unsat_[active_branch_] = true;
+    if (branch_model_count_[active_branch_] == 0)
+      branch_model_count_[active_branch_] = solutions;
+    else
+      branch_model_count_[active_branch_] *= solutions;</span>
+
+<span style = "background-color:#dfd">  }
+  void includeSolution(unsigned solutions) {
+    if (branch_found_unsat_[active_branch_]) {</span>
+<span style = "background-color:#fdd">      assert(branch_model_count_[active_branch_] == 0);
+      return;</span>
+    }
+<span style = "background-color:#dfd">    if (solutions == 0)</span>
+<span style = "background-color:#fdd">      branch_found_unsat_[active_branch_] = true;</span>
+<span style = "background-color:#dfd">    if (branch_model_count_[active_branch_] == 0)
+      branch_model_count_[active_branch_] = solutions;
+    else
+      branch_model_count_[active_branch_] *= solutions;</span>
+
+<span style = "background-color:#dfd">  }</span>
+
+<span style = "background-color:#dfd">  bool branch_found_unsat() {
+    return branch_found_unsat_[active_branch_];
+  }
+  void mark_branch_unsat() {
+    branch_found_unsat_[active_branch_] = true;
+  }</span>
+
+//  void set_both_branches_unsat(){
+//	  branch_found_unsat_[0] =
+//			  branch_found_unsat_[1] = true;
+//	  branch_model_count_[0] = branch_model_count_[1] = 0;
+//	  active_branch_ = 1;
+//  }
+<span style = "background-color:#dfd">  const mpz_class getTotalModelCount() const {
+    return branch_model_count_[0] + branch_model_count_[1];
+  }</span>
+}; // StackLevel
+
+class DecisionStack: public std::vector&lt;StackLevel&gt; {
+  unsigned int failed_literal_test_active = 0;
+public:
+
+  //begin for implicit BCP
+<span style = "background-color:#dfd">  void startFailedLitTest() {
+    failed_literal_test_active = true;
+  }
+  void stopFailedLitTest() {
+    failed_literal_test_active = false;
+  }</span>
+  //end for implicit BCP
+
+<span style = "background-color:#dfd">  StackLevel &amp;top() {
+    assert(size() &gt; 0);
+    return back();
+  }
+  int get_decision_level() const {
+    assert(size() &gt; 0);
+    return static_cast&lt;int&gt;(size()) - 1 + failed_literal_test_active;
+  } // 0 means pre-1st-decision</span>
+}; // DecisionStack
+} // sharpSAT namespace
+#endif /* STACK_H_ */</pre>
+	</body>
+</html>

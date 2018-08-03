@@ -1,0 +1,74 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+        <meta charset="utf-8"/>
+	    <title>stopwatch.cpp</title>
+	    <link href="../../third-party/google-code-prettify/prettify-CppCoverage.css" type="text/css" rel="stylesheet" />
+	    <script type="text/javascript" src="../../third-party/google-code-prettify/prettify.js"></script>
+	</head>
+	<body onload="prettyPrint()">
+        <h4></h4>
+		<pre class="prettyprint lang-cpp linenums">
+/*
+ * stopwatch.cpp
+ *
+ *  Created on: Jun 12, 2018
+ *      Author: Radomir Cernoch
+ */
+
+#include "sharpSAT/stopwatch.h"
+
+#include &lt;chrono&gt;
+
+namespace {
+<span style = "background-color:#dfd">    uint64_t get_us_since_epoch() {
+        return std::chrono::duration_cast&lt;std::chrono::microseconds&gt;( std::chrono::high_resolution_clock::now().time_since_epoch() ).count();
+    }</span>
+}
+
+
+namespace sharpSAT {
+
+<span style = "background-color:#dfd">StopWatch::StopWatch(){
+    start();
+}</span>
+
+<span style = "background-color:#dfd">uint64_t StopWatch::getElapsedTime() {</span>
+    // If we haven't stopped yet, just return the running total
+<span style = "background-color:#dfd">    if (m_stop_time == m_start_time) {
+        return get_us_since_epoch() - m_start_time;</span>
+    }
+<span style = "background-color:#dfd">    return m_stop_time - m_start_time;
+}</span>
+
+<span style = "background-color:#dfd">void StopWatch::start() {
+    m_start_time = m_stop_time = m_last_interval_start = get_us_since_epoch();
+}</span>
+
+<span style = "background-color:#dfd">void StopWatch::stop() {
+    m_stop_time = get_us_since_epoch();
+}</span>
+
+<span style = "background-color:#dfd">double StopWatch::getElapsedSeconds() {
+    return getElapsedTime() / 1000000.;
+}</span>
+
+<span style = "background-color:#dfd">bool StopWatch::timeBoundBroken() {
+    return m_time_bound != 0 &amp;&amp; getElapsedSeconds() &gt; m_time_bound;
+}</span>
+
+<span style = "background-color:#dfd">void StopWatch::setTimeBound(int64_t seconds) {
+    m_time_bound = seconds;
+}</span>
+
+<span style = "background-color:#dfd">bool StopWatch::interval_tick() {
+    if (get_us_since_epoch() &gt; m_last_interval_start + m_interval_length) {
+        m_last_interval_start = get_us_since_epoch();
+        return true;</span>
+    }
+<span style = "background-color:#dfd">    return false;
+}</span>
+
+} // sharpSAT</pre>
+	</body>
+</html>
