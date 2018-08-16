@@ -18,9 +18,16 @@ namespace sharpSAT {
 
 static const int INVALID_DL = -1;
 
+//! Defines assignment of true values to literals.
 enum class TriValue : unsigned char {
+
+  //! Literal is assigned `false`.
   F_TRI = 0,
+
+  //! Literal is assigned `true`.
   T_TRI = 1,
+
+  //! Literal is not yet assigned.
   X_TRI = 2
 };
 
@@ -202,12 +209,12 @@ public:
   }
 
   //! Antecendant represents a clause
-  Antecedent(const ClauseOfs cl_ofs) {
+  explicit Antecedent(const ClauseOfs cl_ofs) {
      val_ = (static_cast<unsigned>(cl_ofs) << 1) | 1;
    }
 
   //! Antecendant represents a literal
-  Antecedent(const LiteralID idLit) {
+  explicit Antecedent(const LiteralID idLit) {
     val_ = (static_cast<unsigned>(idLit) << 1);
   }
 
@@ -230,7 +237,15 @@ public:
 
 
 struct Variable {
+
+  //! Reason why a variable was set (used during UIP).
   Antecedent ante;
+
+  /*!
+   * How many variables were set before this one.
+   *
+   * Value \ref INVALID_DL means the variable has not been set yet.
+   */
   int decision_level = INVALID_DL;
 };
 

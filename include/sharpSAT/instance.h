@@ -151,6 +151,15 @@ protected:
   std::vector<LiteralID> unit_clauses_;
 
   VariableIndexedVector<Variable> variables_;
+
+  /*!
+   * Assignment of truth values to literals.
+   *
+   * This data-structure is redundant.
+   * If a literal is assigned a value,
+   * the vector also contains value of
+   * its negation.
+   */
   LiteralIndexedVector<TriValue> literal_values_;
 
   void decayActivities() {
@@ -219,14 +228,17 @@ protected:
     return literals_[lit];
   }
 
+  //! Determine if the literal is assigned the `true` value.
   inline bool isSatisfied(const LiteralID &lit) const {
     return literal_values_[lit] == TriValue::T_TRI;
   }
 
-  bool isResolved(LiteralID lit) {
+  //! Determine if the literal is assigned the `false` value.
+  bool isResolved(LiteralID lit) const {
     return literal_values_[lit] == TriValue::F_TRI;
   }
 
+  //! Determine if the literal has not been assigned yet.
   bool isActive(LiteralID lit) const {
     return literal_values_[lit] == TriValue::X_TRI;
   }

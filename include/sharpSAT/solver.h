@@ -59,6 +59,8 @@ private:
 	SolverConfiguration config_;
 
 	DecisionStack stack_; // decision stack
+
+	//! When a literal is assigned, it is pushed to this vector.
 	std::vector<LiteralID> literal_stack_;
 
 	StopWatch stopwatch_;
@@ -71,7 +73,14 @@ private:
 	// the last time the conflict clause storage has been compacted
 	unsigned long last_ccl_cleanup_time_ = 0;
 
+	/*!
+	 * Simple preprocessing should be called before backtracking.
+	 *
+	 * Propagates all unit clauses (repeatedly)
+	 * and calls compactification methods.
+	 */
 	bool simplePreProcess();
+
 	bool prepFailedLiteralTest();
 	// we assert that the formula is consistent
 	// and has not been found UNSAT yet
@@ -95,9 +104,12 @@ private:
 	///  this method performs Failed literal tests online
 	bool implicitBCP();
 
-	// this is the actual BCP algorithm
-	// starts propagating all literal in literal_stack_
-	// beginingg at offset start_at_stack_ofs
+	/*!
+	 * Boolean constraint propagation algorithm.
+	 *
+	 * Starts propagating all literals in \ref literal_stack_,
+	 * begining at offset `start_at_stack_ofs`.
+	 */
 	bool BCP(size_t start_at_stack_ofs);
 
 	retStateT backtrack();
@@ -121,9 +133,24 @@ private:
 		return score;
 	}
 
+	/*!
+	 * Assign the literal to be `true` (if not assigned already).
+	 *
+	 * Side-effects:
+	 * - Variable data structure is updated.
+	 * - Both \ref literal_stack_ and \ref literal_values_ are updated.
+	 * - If the antecendant is a clause, its score is increased.
+	 *
+	 * The "undo" method is \ref unSet.
+	 *
+	 * \param[in] lit literal that will be assigned `true`
+	 * \param[in] ant cause of the assignment
+	 *
+	 * \returns `true` if the literal has not been assigned already
+	 */
 	bool setLiteralIfFree(LiteralID lit,
-			Antecedent ant = Antecedent(NOT_A_CLAUSE)) {
-		if (literal_values_[lit] != TriValue::X_TRI)
+			Antecedent ant = Antecedent()) {
+		if (!isActive(lit))
 			return false;
 		var(lit).decision_level = stack_.get_decision_level();
 		var(lit).ante = ant;
@@ -157,11 +184,11 @@ private:
 		return literal_stack_.begin() + stack_.top().literal_stack_ofs();
 	}
 
-	void initStack(unsigned int resSize) {
+	void initStack(unsigned int num_variables) {
 		stack_.clear();
-		stack_.reserve(resSize);
+		stack_.reserve(num_variables);
 		literal_stack_.clear();
-		literal_stack_.reserve(resSize);
+		literal_stack_.reserve(num_variables);
 		// initialize the stack to contain at least level zero
 		stack_.push_back(StackLevel(1, 0, 2));
 		stack_.back().changeBranch();
