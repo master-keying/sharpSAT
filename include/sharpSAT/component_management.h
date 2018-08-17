@@ -32,6 +32,11 @@ public:
         config_(config), cache_(statistics),
         ana_(lit_values) {
   }
+  ~ComponentManager() {
+      for (auto* ptr : component_stack_) {
+          delete ptr;
+      }
+  }
 
   void initialize(LiteralIndexedVector<Literal> & literals,
         std::vector<LiteralID> &lit_pool);
