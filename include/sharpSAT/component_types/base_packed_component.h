@@ -43,11 +43,15 @@ template <class T>
       }
   }
 
+#ifndef NDEBUG
   void assert_size(unsigned size){
     if(end_of_bits_ == 0)
        p--;
     assert(p - data_start_ == size - 1);
   }
+#else
+  void assert_size(unsigned){}
+#endif
 
  private:
   T *data_start_ = nullptr;

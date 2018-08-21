@@ -111,7 +111,7 @@ public:
     return archetype_;
   }
 
-  //begin DEBUG
+#ifndef NDEBUG
   void test_checkArchetypeRepForClause(unsigned *pcl_ofs){
       ClauseIndex clID = getClauseID(ClauseOfs(*pcl_ofs));
       bool all_a = true;
@@ -121,7 +121,7 @@ public:
       }
       assert(all_a == archetype_.clause_all_lits_active(clID));
   }
-  //end DEBUG
+#endif
 
 private:
   // the id of the last clause

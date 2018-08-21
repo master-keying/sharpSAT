@@ -124,6 +124,7 @@ void ComponentCache::init(Component &super_comp, SolverConfiguration &config) {
 	super_comp.set_id(1);
 }
 
+#ifndef NDEBUG
 void ComponentCache::test_descendantstree_consistency() {
 	for (unsigned id = 2; id < entry_base_.size(); id++)
 		if (entry_base_[id] != nullptr) {
@@ -148,6 +149,7 @@ void ComponentCache::test_descendantstree_consistency() {
 			assert(found);
 		}
 }
+#endif
 
 
 
@@ -181,7 +183,7 @@ bool ComponentCache::deleteEntries() {
 	// then go through the Hash Table and erase all Links to empty entries
 
 
-#ifdef DEBUG
+#ifndef NDEBUG
 	test_descendantstree_consistency();
 #endif
 
