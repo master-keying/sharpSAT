@@ -126,11 +126,16 @@ void ComponentManager::sortComponentStackRange(size_t start, size_t end){
     default:
         // General case
         for (size_t i = start; i < end; i++) {
+            bool sorted = true;
             for (size_t j = i + 1; j < end; j++) {
                 if (component_stack_[i]->num_variables()
                     < component_stack_[j]->num_variables()) {
                     std::swap(component_stack_[i], component_stack_[j]);
+                    sorted = false;
                 }
+            }
+            if (sorted) {
+                return;
             }
         }
     }
