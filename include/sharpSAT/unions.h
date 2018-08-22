@@ -93,7 +93,7 @@ protected:
 
   //! Let ReleaseVariant access \ref data if template args mismatch.
   template<class... FriendTs>
-  friend class ReleaseVariant;
+  friend struct ReleaseVariant;
 }; // ReleaseVariant
 
 
