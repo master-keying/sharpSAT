@@ -104,14 +104,38 @@ private:
 
 void ComponentManager::sortComponentStackRange(size_t start, size_t end){
     assert(start <= end);
-    // sort the remaining components for processing
-    for (size_t i = start; i < end; i++)
-      for (size_t j = i + 1; j < end; j++) {
-        if (component_stack_[i]->num_variables()
-            < component_stack_[j]->num_variables())
-          std::swap(component_stack_[i], component_stack_[j]);
-      }
-  }
+    // We did some statistics gathering via the "easy" integration test
+    // suite, and out of 158M calls to this function, 157M were for either
+    // empty range, or 1 element range (thus unsortable). Out of the rest,
+    // 1M was for 2 element ranges. Larger ranges made up only around 10k
+    // calls. This means that most calls to this function don't need to
+    // sort anything, and that it is worth a special case for the 2-element
+    // case.
+
+    switch (end - start) {
+        // These cases are no-op by definition.
+    case 0:
+    case 1:
+        return;
+        // At most 1 comparison
+    case 2:
+        if (component_stack_[start]->num_variables() < component_stack_[end-1]->num_variables()) {
+            std::swap(component_stack_[start], component_stack_[end - 1]);
+        }
+        return;
+    default:
+        // General case
+        for (size_t i = start; i < end; i++) {
+            for (size_t j = i + 1; j < end; j++) {
+                if (component_stack_[i]->num_variables()
+                    < component_stack_[j]->num_variables()) {
+                    std::swap(component_stack_[i], component_stack_[j]);
+                }
+            }
+        }
+    }
+}
+
 
 bool ComponentManager::findNextRemainingComponentOf(StackLevel &top) {
     // record Remaining Components if there are none!
