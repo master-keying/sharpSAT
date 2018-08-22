@@ -23,7 +23,8 @@ enum class retStateT {
 
 class Solver: public Instance {
 public:
-	Solver() {
+	Solver():
+        comp_manager_(config_, statistics_, literal_values_) {
 		stopwatch_.setTimeBound(config_.time_bound_seconds);
 	}
 
@@ -65,8 +66,7 @@ private:
 
 	StopWatch stopwatch_;
 
-	ComponentManager comp_manager_ = ComponentManager(config_,
-			statistics_, literal_values_);
+	ComponentManager comp_manager_;
 
 	// the last time conflict clauses have been deleted
 	unsigned long last_ccl_deletion_time_ = 0;
