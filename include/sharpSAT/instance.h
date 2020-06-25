@@ -133,6 +133,9 @@ protected:
   //! Literal-related data, indexed by LiteralID.
   LiteralIndexedVector<Literal> literals_;
 
+  //! Used in implicitBCP...
+  LiteralIndexedVector<unsigned char> viewed_lits_;
+
   /*!
    * Non-unit non-binary clauses, in which a literal appears.
    *

@@ -492,9 +492,7 @@ bool Solver::BCP(size_t start_at_stack_ofs) {
 
 // this is IBCP 30.08
 bool Solver::implicitBCP() {
-	static vector<LiteralID> test_lits(num_variables());
-	static LiteralIndexedVector<unsigned char> viewed_lits(num_variables() + 1,
-			0);
+	vector<LiteralID> test_lits;
 
 	unsigned stack_ofs = stack_.top().literal_stack_ofs();
 	unsigned num_curr_lits = 0;
@@ -505,9 +503,9 @@ bool Solver::implicitBCP() {
 			for (auto cl_ofs : occurrence_lists_[it->neg()])
 				if (!isSatisfied(cl_ofs)) {
 					for (auto lt = beginOf(cl_ofs); *lt != SENTINEL_LIT; lt++)
-						if (isActive(*lt) && !viewed_lits[lt->neg()]) {
+						if (isActive(*lt) && !viewed_lits_[lt->neg()]) {
 							test_lits.push_back(lt->neg());
-							viewed_lits[lt->neg()] = true;
+							viewed_lits_[lt->neg()] = true;
 
 						}
 				}
@@ -515,7 +513,7 @@ bool Solver::implicitBCP() {
 		num_curr_lits = literal_stack_.size() - stack_ofs;
 		stack_ofs = literal_stack_.size();
 		for (auto jt = test_lits.begin(); jt != test_lits.end(); jt++)
-			viewed_lits[*jt] = false;
+			viewed_lits_[*jt] = false;
 
 		vector<float> scores;
 		scores.clear();

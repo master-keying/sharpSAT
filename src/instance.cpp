@@ -137,6 +137,8 @@ void Instance::compactVariables() {
   occurrence_lists_.resize(variables_.size());
   literals_.clear();
   literals_.resize(variables_.size());
+  viewed_lits_.clear();
+  viewed_lits_.resize(variables_.size(),0);
   literal_values_.clear();
   literal_values_.resize(variables_.size(), TriValue::X_TRI);
 
@@ -305,6 +307,9 @@ void Instance::initialize(
 
   literals_.clear();
   literals_.resize(nVars + 1);
+
+  viewed_lits_.clear();
+  viewed_lits_.resize(nVars + 1,0);
 }
 
 
